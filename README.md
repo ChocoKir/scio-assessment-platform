@@ -1,4 +1,4 @@
-# ➲ SCIO AI: Neural Core V3
+# ➲ SCIO AI: Neural Core V1
 
 SCIO AI is a next-generation, anti-cheat examination platform. It leverages a dual-backend microservice architecture combining Node.js for data routing and Python for real-time computer vision and generative AI grading.
 
