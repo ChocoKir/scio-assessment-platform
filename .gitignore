@@ -1,0 +1,59 @@
+### IntelliJ IDEA ###
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+.kotlin
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+# =========================================
+# ➲ SCIO SPECIFIC SYSTEM SHIELDS
+# =========================================
+
+### Node.js (React Frontend & Express Mainframe) ###
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+### Python (AI Neural Core) ###
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+pip-log.txt
+
+### Machine Learning / Computer Vision ###
+# Prevents uploading massive 20MB+ YOLO weight files (it auto-downloads on run)
+*.pt
+
+### Security & Environment Variables (CRITICAL) ###
+.env
+.env.*
+*.pem

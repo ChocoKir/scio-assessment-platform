@@ -1,0 +1,4 @@
+### Register a New Teacher
+### PURGE MISSION TEST
+### PURGE MISSION TEST
+DELETE http://localhost:5000/api/quizzes/69c251ad94e9cfa2f6aab4e7
