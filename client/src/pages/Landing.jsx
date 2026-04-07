@@ -107,7 +107,7 @@ const Landing = () => {
             "[OK] ESTABLISHING_GEMINI_UPLINK",
             "[OK] ENCRYPTING_DATA_RAIN",
             "[!] NEURAL_LINK_STABLE",
-            "[OK] MISSION_READY"
+            "[OK] SYSTEM_READY"
         ];
 
         let currentLog = 0;
@@ -130,19 +130,10 @@ const Landing = () => {
 
     return (
         <div className="scio-god-root">
-            {/* 🎥 LAYER 0: THE NEURAL MESH (Canvas) */}
+            {/* LAYER 0: THE NEURAL MESH (Canvas) */}
             <canvas ref={canvasRef} className="neural-canvas" />
 
-            {/* 🎞️ LAYER 1: DATA-STORM OVERLAY */}
-            <div className="data-rain-container">
-                {[...Array(12)].map((_, i) => (
-                    <div key={i} className="rain-col" style={{ left: `${i * 8}%`, animationDuration: `${2 + i % 3}s` }}>
-                        {Array(20).fill('10').join('')}
-                    </div>
-                ))}
-            </div>
-
-            {/* 📟 LAYER 2: SYSTEM ASIDE (Terminal Feed) */}
+            {/* LAYER 2: SYSTEM ASIDE (Terminal Feed) */}
             <aside className="terminal-feed mono">
                 <div className="feed-header orbitron">SYS_LOG_STREAM</div>
                 <div className="feed-content">
@@ -156,7 +147,7 @@ const Landing = () => {
                 </div>
             </aside>
 
-            {/* 🎯 LAYER 3: INTERACTIVE HUD VIEWPORT */}
+            {/* LAYER 3: INTERACTIVE HUD VIEWPORT */}
             <div className="hud-viewport" style={{ transform: `rotateY(${mouse.x * 0.15}deg) rotateX(${-mouse.y * 0.15}deg)` }}>
 
                 {/* HUD Corners */}
@@ -169,26 +160,22 @@ const Landing = () => {
                     <div className="sys-ping orbitron">
                         <span className="dot"></span> NODE_ACTIVE // LATENCY: 14MS
                     </div>
-                    <div className="logo-glitch-wrap">
-                        <h1 className="main-logo orbitron" data-text="SCIO">SCIO</h1>
-                        <div className="logo-shadow-glow"></div>
-                    </div>
+                    <h1 className="main-logo orbitron">SCIO</h1>
                     <p className="hero-tagline orbitron">AI_PROCTORING_ECOSYSTEM // V3_ULTRA</p>
                 </header>
 
-                {/* TACTICAL MISSION PODS */}
-                <section className="mission-deck">
+                {/* FEATURE PODS */}
+                <section className="feature-deck">
                     {[
-                        { id: 'MOD_01', title: 'VISION_AI', detail: 'YOLOv8 Real-time Analysis', icon: '👁️' },
-                        { id: 'MOD_02', title: 'NEURAL_GRADES', detail: 'Gemini Semantic Logic', icon: '🧠' },
-                        { id: 'MOD_03', title: 'LOCKDOWN', detail: 'Focal & Browser Shield', icon: '🔒' }
+                        { id: 'MOD_01', title: 'AI_VISION', detail: 'Real-time Analysis', icon: '' },
+                        { id: 'MOD_02', title: 'SMART_GRADING', detail: 'AI-powered Assessment', icon: '' },
+                        { id: 'MOD_03', title: 'LOCKDOWN', detail: 'Focal & Browser Shield', icon: '' }
                     ].map((m) => (
                         <div key={m.id} className="tactical-pod glass-panel">
                             <div className="pod-id mono">{m.id}</div>
                             <div className="pod-icon">{m.icon}</div>
                             <h3 className="orbitron">{m.title}</h3>
                             <p className="mono">{m.detail}</p>
-                            <div className="scan-line-v"></div>
                         </div>
                     ))}
                 </section>
@@ -196,7 +183,6 @@ const Landing = () => {
                 {/* COMMAND LAUNCHERS */}
                 <div className="command-actions">
                     <button onClick={() => navigate('/login')} className="prime-btn primary orbitron">
-                        <div className="btn-glitch-overlay"></div>
                         INITIATE_SESSION
                     </button>
                     <button onClick={() => navigate('/register')} className="prime-btn secondary orbitron">
@@ -212,7 +198,7 @@ const Landing = () => {
                 </div>
             </div>
 
-            {/* 📟 LIVE TELEMETRY FOOTER */}
+            {/* LIVE TELEMETRY FOOTER */}
             <footer className="god-footer mono">
                 <div className="f-item">COORD_X: {mouse.x.toFixed(2)}</div>
                 <div className="f-item">COORD_Y: {mouse.y.toFixed(2)}</div>
@@ -225,7 +211,7 @@ const Landing = () => {
                 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700&family=JetBrains+Mono:wght@100;400&display=swap');
 
                 .scio-god-root {
-                    height: 100vh; width: 100vw; background: #000; color: #fff;
+                    height: 100vh; width: 100vw; background: #fafafa; color: #1a1a2e;
                     display: flex; justify-content: center; align-items: center;
                     position: relative; overflow: hidden; perspective: 1500px;
                     font-family: 'Inter', sans-serif;
@@ -235,22 +221,19 @@ const Landing = () => {
                 .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
                 .mono { font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; }
 
-                /* DATA RAIN */
-                .data-rain-container { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0.1; }
-                .rain-col { position: absolute; top: -200px; color: #00d2ff; writing-mode: vertical-rl; text-orientation: upright; animation: rain linear infinite; }
-                @keyframes rain { to { transform: translateY(120vh); } }
-
                 /* TERMINAL FEED */
                 .terminal-feed {
                     position: absolute; top: 40px; left: 40px; width: 280px; 
-                    background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px;
-                    border: 1px solid rgba(255,255,255,0.05); z-index: 50;
+                    background: linear-gradient(135deg, #16213e, #1a1a2e); padding: 20px; border-radius: 20px;
+                    border: 1px solid rgba(255,255,255,0.08); z-index: 50;
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+                    backdrop-filter: blur(20px);
                 }
-                .feed-header { font-size: 10px; color: #333; margin-bottom: 15px; }
-                .log-line { font-size: 11px; color: #00ffa3; margin-bottom: 5px; opacity: 0.8; }
-                .cursor-blink { display: inline-block; width: 8px; height: 12px; background: #00d2ff; animation: blink 1s infinite; }
-                .load-bar-wrap { width: 100%; height: 2px; background: #111; margin-top: 15px; border-radius: 10px; overflow: hidden; }
-                .load-fill { height: 100%; background: #00ffa3; transition: 0.5s; box-shadow: 0 0 10px #00ffa3; }
+                .feed-header { font-size: 10px; color: #6b7280; margin-bottom: 15px; letter-spacing: 2px; text-transform: uppercase; }
+                .log-line { font-size: 11px; color: #10b981; margin-bottom: 5px; opacity: 0.9; }
+                .cursor-blink { display: inline-block; width: 8px; height: 12px; background: #5B4FFF; animation: blink 1s infinite; }
+                .load-bar-wrap { width: 100%; height: 2px; background: rgba(255,255,255,0.1); margin-top: 15px; border-radius: 10px; overflow: hidden; }
+                .load-fill { height: 100%; background: #10b981; transition: 0.5s; box-shadow: 0 0 10px #10b981; }
 
                 /* HUD VIEWPORT */
                 .hud-viewport {
@@ -258,64 +241,65 @@ const Landing = () => {
                     text-align: center; transform-style: preserve-3d; transition: transform 0.1s ease-out;
                     position: relative;
                 }
-                .hud-corner { position: absolute; width: 40px; height: 40px; border: 2px solid #00d2ff; opacity: 0.3; }
+                .hud-corner { position: absolute; width: 40px; height: 40px; border: 2px solid #5B4FFF; opacity: 0.3; }
                 .tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
                 .tr { top: 0; right: 0; border-left: 0; border-bottom: 0; }
                 .bl { bottom: 0; left: 0; border-right: 0; border-top: 0; }
                 .br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
 
                 /* LOGO & HEADER */
-                .sys-ping { font-size: 10px; color: #444; margin-bottom: 20px; }
-                .dot { display: inline-block; width: 6px; height: 6px; background: #00ffa3; border-radius: 50%; box-shadow: 0 0 10px #00ffa3; margin-right: 10px; }
+                .sys-ping { font-size: 10px; color: #6b7280; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; }
+                .dot { display: inline-block; width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; margin-right: 10px; }
                 .main-logo { 
                     font-size: clamp(80px, 15vw, 180px); font-weight: 900; letter-spacing: 40px; margin: 0;
-                    text-shadow: 0 0 60px rgba(0, 210, 255, 0.4); position: relative;
+                    text-shadow: 0 0 60px rgba(91, 79, 255, 0.4); position: relative;
+                    color: #1a1a2e;
                 }
-                .main-logo::before {
-                    content: attr(data-text); position: absolute; inset: 0; color: #9d50bb;
-                    clip-path: polygon(0 40%, 100% 40%, 100% 60%, 0 60%); animation: glitch 4s infinite; opacity: 0.5;
-                }
-                .hero-tagline { font-size: 11px; color: #666; letter-spacing: 12px; margin-bottom: 80px; }
+                .hero-tagline { font-size: 11px; color: #a0a0b0; letter-spacing: 12px; margin-bottom: 80px; text-transform: uppercase; }
 
-                /* MISSION DECK */
-                .mission-deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 100px; }
-                .tactical-pod {
-                    padding: 50px 30px; border-radius: 0; position: relative; overflow: hidden;
-                    transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); background: rgba(255,255,255,0.01);
+                /* FEATURE DECK */
+                .feature-deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-bottom: 100px; }
+                .feature-pod {
+                    padding: 50px 30px; border-radius: 24px; position: relative; overflow: hidden;
+                    transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); background: linear-gradient(135deg, #16213e, #1a1a2e);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
                 }
-                .tactical-pod:hover {
-                    background: rgba(0, 210, 255, 0.05); border-color: #00d2ff;
+                .feature-pod:hover {
+                    background: linear-gradient(135deg, #1a1a2e, #16213e); border-color: #5B4FFF;
                     transform: translateZ(100px) rotateY(10deg);
+                    box-shadow: 0 8px 32px rgba(91, 79, 255, 0.25);
                 }
-                .pod-id { font-size: 10px; color: #222; margin-bottom: 20px; text-align: left; }
+                .pod-id { font-size: 10px; color: #6b7280; margin-bottom: 20px; text-align: left; letter-spacing: 2px; text-transform: uppercase; }
                 .pod-icon { font-size: 40px; margin-bottom: 15px; }
-                .tactical-pod h3 { font-size: 14px; color: #00d2ff; margin-bottom: 8px; }
-                .tactical-pod p { font-size: 9px; color: #444; text-transform: uppercase; }
-                .scan-line-v { position: absolute; top: -100%; left: 0; width: 100%; height: 50%; background: linear-gradient(transparent, rgba(0,210,255,0.1), transparent); transition: 0s; }
-                .tactical-pod:hover .scan-line-v { top: 100%; transition: 1.5s linear infinite; }
+                .feature-pod h3 { font-size: 14px; color: #5B4FFF; margin-bottom: 8px; font-weight: 700; }
+                .feature-pod p { font-size: 9px; color: #a0a0b0; text-transform: uppercase; letter-spacing: 1px; }
+                .scan-line-v { position: absolute; top: -100%; left: 0; width: 100%; height: 50%; background: linear-gradient(transparent, rgba(91, 79, 255, 0.1), transparent); transition: 0s; }
+                .feature-pod:hover .scan-line-v { top: 100%; transition: 1.5s linear infinite; }
 
                 /* BUTTONS */
                 .command-actions { display: flex; gap: 40px; justify-content: center; }
                 .prime-btn {
-                    padding: 25px 80px; font-weight: 900; letter-spacing: 6px; font-size: 14px;
-                    border: 1px solid #111; background: transparent; color: #fff; cursor: pointer;
-                    position: relative; overflow: hidden; transition: 0.5s;
+                    padding: 25px 80px; font-weight: 700; letter-spacing: 6px; font-size: 14px;
+                    border: 1px solid #1a1a2e; background: #1a1a2e; color: #ffffff; cursor: pointer;
+                    position: relative; overflow: hidden; transition: 0.5s; border-radius: 12px;
+                    text-transform: uppercase;
                 }
-                .prime-btn.primary { border-color: #00d2ff; }
-                .prime-btn:hover { background: #fff; color: #000; transform: translateY(-5px); box-shadow: 0 0 50px rgba(0,210,255,0.3); }
+                .prime-btn.primary { border-color: #5B4FFF; background: #1a1a2e; }
+                .prime-btn:hover { background: #5B4FFF; color: #ffffff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
 
                 /* TECH SPECS */
-                .tech-specs { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; font-size: 9px; color: #111; }
+                .tech-specs { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 30px; font-size: 9px; color: #6b7280; }
 
                 /* FOOTER */
                 .god-footer {
                     position: absolute; bottom: 40px; width: 100%; display: flex;
-                    justify-content: center; gap: 60px; opacity: 0.3; font-size: 10px;
+                    justify-content: center; gap: 60px; opacity: 0.6; font-size: 10px;
+                    color: #a0a0b0;
                 }
-                .highlight { color: #00ffa3; }
+                .highlight { color: #10b981; }
 
                 @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-                @keyframes glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } }
             `}</style>
         </div>
     );

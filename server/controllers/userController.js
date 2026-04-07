@@ -39,7 +39,13 @@ const registerUser = async (req, res) => {
         }
     } catch (error) {
         console.error("Registration error:", error);
-        res.status(500).json({ message: error.message });
+        // res.status(500).json({ message: error.message });
+
+        res.status(500).json({ 
+      message: 'Registration failed.',
+      error: error.message, // Include error details in development
+    //   stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
     }
 };
 

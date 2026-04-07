@@ -13,11 +13,11 @@ const Analytics = () => {
     const [notify, setNotify] = useState({ message: '', type: '' });
     const [expandedId, setExpandedId] = useState(null);
 
-    // 1. 🛰️ DATA UPLINK
+    // --- DATA FETCHING ---
     useEffect(() => {
         const storedUser = localStorage.getItem('scio_user');
         if (!storedUser || JSON.parse(storedUser).role !== 'teacher') {
-            setNotify({ message: 'ACCESS_DENIED: Teacher clearance required.', type: 'error' });
+            setNotify({ message: 'Access denied. Teacher access required.', type: 'error' });
             setTimeout(() => navigate('/dashboard'), 2000);
             return;
         }
@@ -30,10 +30,10 @@ const Analytics = () => {
                 if (response.ok) {
                     setSubmissions(data);
                 } else {
-                    setNotify({ message: 'DATA_FAILURE: Mission logs missing.', type: 'error' });
+                    setNotify({ message: 'Could not load data. Please try again.', type: 'error' });
                 }
             } catch (error) {
-                setNotify({ message: 'LINK_FAILURE: Core unreachable.', type: 'error' });
+                setNotify({ message: 'Connection error. Please try again.', type: 'error' });
             } finally {
                 setLoading(false);
             }
@@ -41,31 +41,31 @@ const Analytics = () => {
         fetchAnalytics();
     }, [quizId, navigate]);
 
-    // 2. ⚔️ TACTICAL HANDLERS
+    // --- HANDLERS ---
     const toggleDetails = (subId) => {
         setExpandedId(expandedId === subId ? null : subId);
         if (expandedId !== subId) {
-            setNotify({ message: 'DECRYPTING: Neural data stream active.', type: 'info' });
+            setNotify({ message: 'Loading results...', type: 'info' });
         }
     };
 
-    // ➲ UPGRADE: Purge All Mission Logs
+    // --- DELETE ALL RESULTS ---
     const handlePurgeAll = async () => {
-        if (!window.confirm("➲ CRITICAL: Wipe all candidate logs for this mission? (Quiz will remain)")) return;
+        if (!window.confirm("Delete all student results for this assessment? (Assessment will remain)")) return;
         try {
             const response = await fetch(`http://localhost:5000/api/submissions/quiz/${quizId}`, { method: 'DELETE' });
             if (response.ok) {
                 setSubmissions([]);
-                setNotify({ message: 'ARCHIVE_CLEARED: All logs purged.', type: 'success' });
+                setNotify({ message: 'All results deleted successfully.', type: 'success' });
             }
         } catch (e) {
-            setNotify({ message: 'PURGE_ERROR: System rejected request.', type: 'error' });
+            setNotify({ message: 'Failed to delete results.', type: 'error' });
         }
     };
 
     // ➲ UPGRADE: PDF GENERATOR ENGINE
     const exportPDF = (subId, studentName) => {
-        setNotify({ message: 'GENERATING_REPORT: Compiling PDF...', type: 'info' });
+        setNotify({ message: 'Generating report...', type: 'info' });
         const element = document.getElementById(`report-${subId}`);
 
         // Temporarily hide UI buttons during the print capture
@@ -83,11 +83,11 @@ const Analytics = () => {
         html2pdf().set(opt).from(element).save().then(() => {
             // Restore UI buttons after generation
             buttons.forEach(btn => btn.style.display = 'block');
-            setNotify({ message: 'REPORT_EXPORTED: Saved to local drive.', type: 'success' });
+            setNotify({ message: 'Report saved successfully.', type: 'success' });
         });
     };
 
-    if (loading) return <div className="loader-root orbitron"><div className="pulse">RETRIEVING_MISSION_INTEL...</div></div>;
+    if (loading) return <div className="loader-root orbitron"><div className="pulse">Loading...</div></div>;
 
     const averageScore = submissions.length > 0
         ? (submissions.reduce((acc, curr) => acc + curr.percentage, 0) / submissions.length).toFixed(1)
@@ -95,15 +95,13 @@ const Analytics = () => {
 
     return (
         <div className="analytics-root">
-            <div className="scanline"></div>
-
             <div className="analytics-container">
                 {/* --- HUD HEADER --- */}
                 <header className="intel-header">
                     <div className="header-left">
                         <button onClick={() => navigate('/dashboard')} className="back-btn orbitron">← COMMAND_HUB</button>
-                        <h1 className="orbitron main-title">MISSION_<span className="accent">ANALYTICS</span></h1>
-                        <p className="id-tag">EXAM_ID: {quizId?.toUpperCase()}</p>
+                        <h1 className="orbitron main-title">ASSESSMENT_<span className="accent">ANALYTICS</span></h1>
+                        <p className="id-tag">ASSESSMENT_ID: {quizId?.toUpperCase()}</p>
                     </div>
 
                     <div className="header-right">
@@ -111,17 +109,17 @@ const Analytics = () => {
                             <div className="label orbitron">CLASS_AVERAGE</div>
                             <div className="score orbitron" style={{ color: averageScore >= 70 ? '#00ffa3' : '#ff4d4d' }}>{averageScore}%</div>
                         </div>
-                        <button className="purge-all-btn orbitron" onClick={handlePurgeAll}>PURGE_ARCHIVE</button>
+                        <button className="purge-all-btn orbitron" onClick={handlePurgeAll}>DELETE_ALL</button>
                     </div>
                 </header>
 
                 {/* --- KPI MODULE --- */}
                 <div className="kpi-grid">
                     {[
-                        { label: 'CANDIDATES', val: submissions.length },
-                        { label: 'AI_STABILITY', val: 'NOMINAL', highlight: true },
-                        { label: 'VISION', val: 'YOLO_V8S' },
-                        { label: 'ENCRYPTION', val: 'AES_256' }
+                        { label: 'STUDENTS', val: submissions.length },
+                        { label: 'SYSTEM_STATUS', val: 'NOMINAL', highlight: true },
+                        { label: 'CAMERA', val: 'YOLO_V8' },
+                        { label: 'SECURITY', val: 'AES_256' }
                     ].map((kpi, i) => (
                         <div key={i} className={`kpi-card glass-panel ${kpi.highlight ? 'active-kpi' : ''}`}>
                             <small className="orbitron">{kpi.label}</small>
@@ -130,23 +128,23 @@ const Analytics = () => {
                     ))}
                 </div>
 
-                <h2 className="section-label orbitron">➲ CANDIDATE_ACTIVITY_LOGS</h2>
+                <h2 className="section-label orbitron">STUDENT_RESULTS</h2>
 
                 <div className="candidate-grid">
                     {submissions.length === 0 ? (
-                        <div className="empty-state glass-panel orbitron">NO_DATA_ARCHIVED_IN_CORE</div>
+                        <div className="empty-state glass-panel orbitron">No results found</div>
                     ) : (
                         submissions.map((sub) => {
-                            const hasBreach = sub.tabSwitches > 0 || sub.phoneDetected || sub.multipleFacesDetected || sub.faceMissingDetected;
+                                    const hasIssues = sub.tabSwitches > 0 || sub.phoneDetected || sub.multipleFacesDetected || sub.faceMissingDetected;
 
                             return (
-                                // ➲ THE PDF TARGET ID
-                                <div key={sub._id} id={`report-${sub._id}`} className={`candidate-card glass-panel ${expandedId === sub._id ? 'expanded' : ''} ${hasBreach ? 'breach-border' : ''}`}>
+                                // THE PDF TARGET ID
+                                <div key={sub._id} id={`report-${sub._id}`} className={`candidate-card glass-panel ${expandedId === sub._id ? 'expanded' : ''} ${hasIssues ? 'breach-border' : ''}`}>
 
                                     <div className="badge-container">
-                                        {sub.phoneDetected && <span className="v-badge critical orbitron">⚠️ PHONE_DET</span>}
-                                        {sub.multipleFacesDetected && <span className="v-badge warning orbitron">⚠️ MULTI_SUBJ</span>}
-                                        {sub.faceMissingDetected && <span className="v-badge warning orbitron">⚠️ MISSING</span>}
+                                        {sub.phoneDetected && <span className="v-badge critical orbitron">⚠️ PHONE_DETECTED</span>}
+                                        {sub.multipleFacesDetected && <span className="v-badge warning orbitron">⚠️ MULTIPLE_FACES</span>}
+                                        {sub.faceMissingDetected && <span className="v-badge warning orbitron">⚠️ FACE_MISSING</span>}
                                         {sub.tabSwitches > 0 && <span className="v-badge info orbitron">TABS: {sub.tabSwitches}</span>}
                                     </div>
 
@@ -163,15 +161,15 @@ const Analytics = () => {
 
                                     <div className="card-actions">
                                         <div className="security-status orbitron">
-                                            INTEGRITY: {hasBreach ? <span className="fail-text">🔴_COMPROMISED</span> : <span className="pass-text">🟢_SECURE</span>}
+                                            STATUS: {hasIssues ? <span className="fail-text">🔴 ISSUES_DETECTED</span> : <span className="pass-text">🟢 SECURE</span>}
                                         </div>
 
                                         <div style={{ display: 'flex', gap: '15px' }}>
                                             <button onClick={() => toggleDetails(sub._id)} className={`details-btn orbitron ${expandedId === sub._id ? 'active' : ''}`}>
-                                                {expandedId === sub._id ? 'HIDE_INTEL' : 'DECRYPT_LOGS'}
+                                                {expandedId === sub._id ? 'HIDE_DETAILS' : 'VIEW_DETAILS'}
                                             </button>
 
-                                            {/* ➲ PDF EXPORT BUTTON */}
+                                            {/* PDF EXPORT BUTTON */}
                                             {expandedId === sub._id && (
                                                 <button onClick={() => exportPDF(sub._id, sub.studentName)} className="pdf-btn orbitron">
                                                     📥 EXPORT_PDF
@@ -182,15 +180,15 @@ const Analytics = () => {
 
                                     {expandedId === sub._id && (
                                         <div className="detailed-intel-pane">
-                                            <div className="pane-header orbitron">➲ NEURAL_DEBRIEF_STREAM:</div>
+                                            <div className="pane-header orbitron">AI_ANALYSIS:</div>
                                             <div className="feedback-list">
                                                 {sub.detailed_results?.map((res, i) => (
                                                     <div key={i} className="feedback-item" style={{ borderLeftColor: res.awarded_marks > (res.possible_marks / 2) ? '#00ffa3' : '#ff4d4d' }}>
-                                                        <p className="q-text mono"><strong>UNIT_{i+1}:</strong> {res.question}</p>
-                                                        <p className="s-answer italic">"{res.student_answer || "NULL_INPUT"}"</p>
+                                                        <p className="q-text mono"><strong>Question {i+1}:</strong> {res.question}</p>
+                                                        <p className="s-answer italic">"{res.student_answer || "NO_ANSWER"}"</p>
                                                         <div className="ai-eval">
                                                             <span className="orbitron label">AI_ANALYSIS:</span> {res.ai_feedback}
-                                                            <div className="marks-pill orbitron">MARKS: {res.awarded_marks} / {res.possible_marks}</div>
+                                                            <div className="marks-pill orbitron">SCORE: {res.awarded_marks} / {res.possible_marks}</div>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -207,75 +205,63 @@ const Analytics = () => {
             <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
 
             <style>{`
-                .analytics-root { min-height: 100vh; background: #020202; color: #fff; padding: 60px; font-family: 'Inter', sans-serif; position: relative; overflow-x: hidden; }
-                .analytics-container { maxWidth: 1300px; margin: 0 auto; z-index: 10; position: relative; }
+                .analytics-root { min-height: 100vh; background: #fafafa; color: #1a1a2e; padding: 40px; font-family: 'Inter', sans-serif; position: relative; overflow-x: hidden; }
+                .analytics-container { max-width: 1400px; margin: 0 auto; z-index: 10; position: relative; }
                 
                 .intel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px; }
                 .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
-                .main-title { font-size: 42px; margin: 0; letter-spacing: 4px; }
-                .accent { color: #00d2ff; }
-                .id-tag { color: #444; font-size: 11px; margin-top: 10px; font-family: monospace; letter-spacing: 2px; }
+                .main-title { font-size: 42px; margin: 0; letter-spacing: 4px; color: #1a1a2e; }
+                .accent { color: #5B4FFF; }
+                .id-tag { color: #6b7280; font-size: 11px; margin-top: 10px; font-family: monospace; letter-spacing: 2px; }
                 
-                .back-btn { background: rgba(255,255,255,0.02); border: 1px solid #222; color: #00d2ff; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 11px; transition: 0.3s; margin-bottom: 20px; }
-                .back-btn:hover { background: #00d2ff; color: #000; box-shadow: 0 0 20px rgba(0,210,255,0.4); }
+                .back-btn { background: rgba(255,255,255,0.02); border: 1px solid #e5e7eb; color: #6b7280; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 11px; transition: 0.3s; margin-bottom: 20px; }
+                .back-btn:hover { background: #5B4FFF; color: #ffffff; box-shadow: 0 4px 12px rgba(91, 79, 255, 0.25); }
                 
-                .purge-all-btn { background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 10px 20px; border-radius: 8px; font-size: 10px; cursor: pointer; transition: 0.3s; }
-                .purge-all-btn:hover { background: #ff4d4d; color: #000; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
+                .purge-all-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 10px 20px; border-radius: 8px; font-size: 10px; cursor: pointer; transition: 0.3s; }
+                .purge-all-btn:hover { background: #ef4444; color: #ffffff; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
 
-                .avg-box { padding: 25px 40px; text-align: right; border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 15px; background: rgba(10,10,10,0.8); backdrop-filter: blur(20px); }
-                .avg-box .score { font-size: 56px; font-weight: 900; line-height: 1; margin-top: 5px; }
-                .label { font-size: 10px; color: #555; letter-spacing: 2px; }
+                .avg-box { padding: 25px 40px; text-align: right; border: 1px solid rgba(91, 79, 255, 0.2); border-radius: 15px; background: #ffffff; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .avg-box .score { font-size: 56px; font-weight: 900; line-height: 1; margin-top: 5px; color: #1a1a2e; }
+                .label { font-size: 10px; color: #6b7280; letter-spacing: 2px; }
 
                 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 60px; }
-                .glass-panel { background: rgba(10, 10, 10, 0.85); border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 20px; backdrop-filter: blur(20px); }
+                .glass-panel { background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; backdrop-filter: none; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
                 .kpi-card { padding: 25px; text-align: center; border-radius: 20px; }
-                .active-kpi { border-color: #00ffa355; background: rgba(0, 255, 163, 0.05); }
+                .active-kpi { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
 
-                .section-label { margin-bottom: 30px; border-bottom: 1px solid #111; padding-bottom: 15px; color: #444; font-size: 14px; }
+                .section-label { margin-bottom: 30px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; color: #1a1a2e; font-size: 14px; }
                 .candidate-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
-                .candidate-card { padding: 40px; transition: 0.4s; position: relative; border-radius: 25px; }
-                .candidate-card.expanded { border-color: #00d2ff55; background: rgba(0, 210, 255, 0.02); }
-                .breach-border { border-color: rgba(255, 77, 77, 0.3) !important; }
+                .candidate-card { padding: 40px; transition: 0.4s; position: relative; border-radius: 25px; background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); }
+                .candidate-card.expanded { border-color: #5B4FFF; background: rgba(91, 79, 255, 0.02); }
+                .breach-border { border-color: rgba(239, 68, 68, 0.3) !important; }
                 
                 .badge-container { display: flex; gap: 10px; margin-bottom: 20px; }
                 .v-badge { font-size: 9px; padding: 6px 12px; border-radius: 5px; font-weight: 900; letter-spacing: 1px; }
-                .v-badge.critical { background: #ff4d4d; color: #000; }
-                .v-badge.warning { background: #ffc107; color: #000; }
-                .v-badge.info { background: #111; color: #00d2ff; border: 1px solid #00d2ff33; }
+                .v-badge.critical { background: #ef4444; color: #ffffff; }
+                .v-badge.warning { background: #f59e0b; color: #1a1a2e; }
+                .v-badge.info { background: #6b7280; color: #ffffff; }
 
                 .card-main-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; padding-bottom: 25px; margin-bottom: 25px; }
-                .candidate-name { font-size: 30px; margin: 0; font-weight: 800; color: #eee; }
-                .sync-date { color: #444; font-size: 10px; margin-top: 8px; }
-                .candidate-score { font-size: 48px; font-weight: 900; }
-                .pts-label { text-align: right; font-size: 12px; color: #555; }
+                .candidate-name { font-size: 30px; margin: 0; font-weight: 800; color: #1a1a2e; }
+                .sync-date { color: #6b7280; font-size: 10px; margin-top: 8px; }
+                .candidate-score { font-size: 48px; font-weight: 900; color: #1a1a2e; }
+                .pts-label { text-align: right; font-size: 12px; color: #6b7280; }
 
                 .card-actions { display: flex; justify-content: space-between; align-items: center; }
                 .fail-text { color: #ff4d4d; } .pass-text { color: #00ffa3; }
                 
-                .details-btn { padding: 12px 25px; background: transparent; border: 1px solid #333; color: #888; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
-                .details-btn:hover { border-color: #00d2ff; color: #fff; }
-                .details-btn.active { background: #333; color: #fff; }
+                .details-btn { padding: 12px 25px; background: transparent; border: 1px solid #e5e7eb; color: #6b7280; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
+                .details-btn:hover { border-color: #5B4FFF; color: #ffffff; }
+                .details-btn.active { background: #5B4FFF; color: #ffffff; }
                 
-                .pdf-btn { padding: 12px 25px; background: #00ffa3; color: #000; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
-                .pdf-btn:hover { box-shadow: 0 0 15px rgba(0,255,163,0.5); transform: translateY(-2px); }
+                .pdf-btn { padding: 12px 25px; background: #10b981; color: #ffffff; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
+                .pdf-btn:hover { box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); transform: translateY(-2px); }
 
                 .detailed-intel-pane { margin-top: 40px; padding-top: 40px; border-top: 1px dashed #222; animation: slideUp 0.4s ease-out; }
                 .pane-header { color: #00d2ff; font-size: 11px; margin-bottom: 30px; letter-spacing: 3px; }
                 .feedback-item { padding: 25px; background: rgba(255,255,255,0.02); border-radius: 18px; margin-bottom: 20px; border-left: 4px solid; }
                 .q-text { font-size: 15px; margin-bottom: 10px; color: #ccc; }
                 .s-answer { color: #888; margin-bottom: 20px; font-size: 14px; }
-                .ai-eval { padding: 18px; background: rgba(0,0,0,0.4); border-radius: 12px; font-size: 14px; position: relative; border: 1px solid #111; color: #999; }
-                .ai-eval .label { color: #00d2ff; margin-right: 10px; }
-                .marks-pill { position: absolute; top: -12px; right: 20px; background: #0a0a0a; padding: 6px 16px; border-radius: 20px; font-size: 10px; border: 1px solid #222; }
-
-                @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                .loader-root { background: #000; height: 100vh; display: flex; justifyContent: center; alignItems: center; color: #00d2ff; font-size: 14px; letter-spacing: 4px; }
-                .pulse { animation: pulseHUD 2s infinite; }
-                @keyframes pulseHUD { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-                .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 100; }
-                .orbitron { font-family: 'Orbitron', sans-serif; }
-                .mono { font-family: 'JetBrains Mono', monospace; }
-                .italic { font-style: italic; }
             `}</style>
         </div>
     );

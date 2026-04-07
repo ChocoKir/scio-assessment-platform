@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Notification from '../components/Notification'; // ➲ Tactical HUD Integration
+import Notification from '../components/Notification'; // Notification Integration
 
 const Dashboard = () => {
     // --- CORE STATE ARCHITECTURE ---
@@ -14,7 +14,7 @@ const Dashboard = () => {
 
     const navigate = useNavigate();
 
-    // --- NEURAL LINK: AUTH & DATA FETCHING ---
+    // --- AUTHENTICATION & DATA FETCHING ---
     useEffect(() => {
         const storedUser = localStorage.getItem('scio_user');
 
@@ -45,11 +45,11 @@ const Dashboard = () => {
                         setMySubmissions(data);
                     }
                 } else {
-                    setNotify({ message: 'DATA_ERROR: Could not synchronize logs.', type: 'error' });
+                    setNotify({ message: 'Could not load data. Please try again.', type: 'error' });
                 }
             } catch (error) {
-                console.error("Neural Link Error:", error);
-                setNotify({ message: 'LINK_FAILURE: Connection to core lost.', type: 'error' });
+                console.error("Authentication Error:", error);
+                setNotify({ message: 'Connection error. Please try again.', type: 'error' });
             }
         };
 
@@ -59,7 +59,7 @@ const Dashboard = () => {
     // --- SYSTEM HANDLERS ---
     const handleLogout = () => {
         localStorage.removeItem('scio_user');
-        setNotify({ message: 'TERMINATING_SESSION: Goodbye, Agent.', type: 'info' });
+        setNotify({ message: 'Logged out successfully. Goodbye!', type: 'info' });
         setTimeout(() => {
             navigate('/login');
         }, 1500);
@@ -68,16 +68,16 @@ const Dashboard = () => {
     const copyUplink = (quizId) => {
         const link = `${window.location.origin}/take-quiz/${quizId}`;
         navigator.clipboard.writeText(link);
-        setNotify({ message: 'UPLINK_ENCRYPTED: Share link copied to clipboard.', type: 'success' });
+        setNotify({ message: 'Share link copied to clipboard.', type: 'success' });
     };
 
     const toggleExpansion = (id) => {
         setExpandedExam(expandedExam === id ? null : id);
     };
 
-    // ➲ NEW: PURGE PROTOCOL
+    // NEW: DELETE ASSESSMENT
     const handleDeleteQuiz = async (id) => {
-        if (!window.confirm("➲ WARNING: Purging this mission will erase all associated student data from the mainframe. Proceed?")) return;
+        if (!window.confirm("Are you sure you want to delete this assessment? This will remove all associated student data.")) return;
 
         try {
             const response = await fetch(`http://localhost:5000/api/quizzes/${id}`, {
@@ -87,12 +87,12 @@ const Dashboard = () => {
             if (response.ok) {
                 // Update local state to reflect the removal instantly
                 setQuizzes(quizzes.filter(quiz => quiz._id !== id));
-                setNotify({ message: 'MISSION_PURGED: Data removed from mainframe.', type: 'success' });
+                setNotify({ message: 'Assessment deleted successfully.', type: 'success' });
             } else {
-                setNotify({ message: 'PURGE_FAILURE: Core rejected the request.', type: 'error' });
+                setNotify({ message: 'Failed to delete assessment.', type: 'error' });
             }
         } catch (error) {
-            setNotify({ message: 'LINK_FAILURE: Could not reach the core server.', type: 'error' });
+            setNotify({ message: 'Connection error. Please try again.', type: 'error' });
         }
     };
 
@@ -102,8 +102,8 @@ const Dashboard = () => {
         return {
             padding: '18px 25px',
             cursor: 'pointer',
-            backgroundColor: isActive ? 'rgba(0, 210, 255, 0.1)' : 'transparent',
-            color: isActive ? '#00d2ff' : '#666',
+            backgroundColor: isActive ? 'rgba(91, 79, 255, 0.1)' : 'transparent',
+            color: isActive ? '#5B4FFF' : '#a0a0b0',
             borderRadius: '15px',
             marginBottom: '12px',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -113,24 +113,22 @@ const Dashboard = () => {
             fontSize: '14px',
             fontFamily: 'Orbitron',
             letterSpacing: '1px',
-            borderLeft: isActive ? '4px solid #00d2ff' : '4px solid transparent',
-            boxShadow: isActive ? 'inset 0 0 15px rgba(0, 210, 255, 0.05)' : 'none'
+            borderLeft: isActive ? '4px solid #5B4FFF' : '4px solid transparent',
+            boxShadow: isActive ? 'inset 0 0 15px rgba(91, 79, 255, 0.05)' : 'none'
         };
     };
 
     if (!user) {
         return (
             <div className="loading-screen">
-                <div className="pulse">INITIATING_NEURAL_LINK...</div>
+                <div className="pulse">Loading...</div>
             </div>
         );
     }
 
     return (
         <div className="scio-root-container">
-            <div className="scanline"></div>
-
-            {/* 🌑 TACTICAL SIDEBAR */}
+            {/* SIDEBAR */}
             <aside className="sidebar-console">
                 <div className="brand-header">
                     <h1 className="orbitron main-logo">SCIO<span className="accent">AI</span></h1>
@@ -139,21 +137,21 @@ const Dashboard = () => {
 
                 <nav className="nav-stack">
                     <div onClick={() => setActiveTab('home')} style={sidebarItemStyle('home')}>
-                        🏠 HUB_BASE
+                        HUB_BASE
                     </div>
 
                     {user.role === 'teacher' ? (
                         <>
-                            <div onClick={() => navigate('/create-quiz')} style={{ ...sidebarItemStyle('create'), color: '#00ffa3' }}>
-                                ⚡ FORGE_EXAM
+                            <div onClick={() => navigate('/create-quiz')} style={{ ...sidebarItemStyle('create'), color: '#10b981' }}>
+                        CREATE_ASSESSMENT
                             </div>
                             <div onClick={() => setActiveTab('reports')} style={sidebarItemStyle('reports')}>
-                                📈 INTEL_LOGS
+                                RESULTS
                             </div>
                         </>
                     ) : (
                         <div onClick={() => setActiveTab('reports')} style={sidebarItemStyle('reports')}>
-                            🏅 MY_RECORDS
+                            📅 MY_RESULTS
                         </div>
                     )}
                 </nav>
@@ -167,7 +165,7 @@ const Dashboard = () => {
                 </div>
 
                 <button onClick={handleLogout} className="disconnect-trigger orbitron">
-                    🚀 DISCONNECT
+                    🚀 LOGOUT
                 </button>
             </aside>
 
@@ -176,7 +174,7 @@ const Dashboard = () => {
                 <header className="viewport-top-bar">
                     <div className="greeting-block">
                         <h2 className="welcome-text">
-                            Welcome, <span className="user-glow">Agent {user.name}</span>
+                            Welcome, <span className="user-glow">{user.name}</span>
                         </h2>
                         <p className="system-subtitle">System status: <span className="status-green">NOMINAL</span> • All nodes operational.</p>
                     </div>
@@ -192,20 +190,20 @@ const Dashboard = () => {
                     {user.role === 'teacher' && activeTab === 'home' && (
                         <div className="quiz-data-grid">
                             {quizzes.map((quiz) => (
-                                <div key={quiz._id} className="mission-card glass-panel">
+                                <div key={quiz._id} className="assessment-card glass-panel">
                                     <div className="card-top">
                                         <span className="orbitron node-id">ID: {quiz._id.slice(-6).toUpperCase()}</span>
                                         {/* ➲ PURGE TRIGGER */}
-                                        <button className="purge-btn" onClick={() => handleDeleteQuiz(quiz._id)} title="PURGE_MISSION">
+                                        <button className="purge-btn" onClick={() => handleDeleteQuiz(quiz._id)} title="Delete Assessment">
                                             ✖
                                         </button>
                                     </div>
                                     <h3 className="orbitron quiz-title">{quiz.title}</h3>
-                                    <p className="quiz-meta">{quiz.topic} • {quiz.questions.length} Mission Units</p>
+                                    <p className="quiz-meta">{quiz.topic} • {quiz.questions.length} Questions</p>
 
                                     <div className="card-footer">
                                         <button className="primary-action-btn orbitron" onClick={() => navigate(`/analytics/${quiz._id}`)}>
-                                            ACCESS_DATA
+                                            VIEW_RESULTS
                                         </button>
                                         <button className="secondary-icon-btn" onClick={() => copyUplink(quiz._id)}>
                                             🔗
@@ -221,23 +219,23 @@ const Dashboard = () => {
                         <div className="portal-entry-zone">
                             <div className="portal-module glass-panel">
                                 <div className="laser-scanner-line"></div>
-                                <h2 className="orbitron portal-title">ACCESS_PORTAL</h2>
-                                <p className="portal-desc">Enter the encrypted mission key to synchronize with the exam core.</p>
+                                <h2 className="orbitron portal-title">JOIN_ASSESSMENT</h2>
+                                <p className="portal-desc">Enter the session code to join the assessment.</p>
                                 <input
                                     type="text"
-                                    placeholder="PASTE_MISSION_KEY"
-                                    className="tactical-text-input"
+                                    placeholder="ENTER_SESSION_CODE"
+                                    className="session-input"
                                     value={joinCode}
                                     onChange={(e) => setJoinCode(e.target.value)}
                                 />
                                 <button className="portal-launch-btn orbitron" onClick={() => {
                                     if (!joinCode) {
-                                        setNotify({ message: 'INPUT_REQUIRED: Mission key is missing.', type: 'error' });
+                                        setNotify({ message: 'Session code is required.', type: 'error' });
                                         return;
                                     }
                                     navigate(`/take-quiz/${joinCode.split('/').pop()}`);
                                 }}>
-                                    INITIATE_NEURAL_SYNC
+                                    JOIN_ASSESSMENT
                                 </button>
                             </div>
                         </div>
@@ -246,40 +244,40 @@ const Dashboard = () => {
                     {/* --- TAB: REPORTS / RECORDS --- */}
                     {activeTab === 'reports' && (
                         <div className="intelligence-logs-view">
-                            <h3 className="orbitron section-label">➲ ARCHIVED_LOGS</h3>
+                            <h3 className="orbitron section-label">Results</h3>
                             {mySubmissions.length === 0 && quizzes.length === 0 ? (
-                                <div className="empty-mainframe-msg orbitron">NO_DATA_STREAMS_DETECTED</div>
+                                <div className="empty-mainframe-msg orbitron">No results found</div>
                             ) : (
                                 mySubmissions.map((sub) => (
                                     <div key={sub._id} className={`intel-entry ${expandedExam === sub._id ? 'expanded' : ''}`}>
                                         <div className="intel-header" onClick={() => toggleExpansion(sub._id)}>
                                             <div className="intel-left">
                                                 <div className="rank-orb orbitron" style={{
-                                                    color: sub.percentage >= 70 ? '#00ffa3' : '#ff4d4d',
-                                                    borderColor: sub.percentage >= 70 ? 'rgba(0, 255, 163, 0.2)' : 'rgba(255, 77, 77, 0.2)'
+                                                    color: sub.percentage >= 70 ? '#10b981' : '#ef4444',
+                                                    borderColor: sub.percentage >= 70 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'
                                                 }}>
                                                     {sub.percentage}%
                                                 </div>
                                                 <div className="intel-info">
-                                                    <h4 className="intel-title">{sub.quizId?.title || "SYSTEM_DATA_LOG"}</h4>
+                                                    <h4 className="intel-title">{sub.quizId?.title || "Assessment Result"}</h4>
                                                     <small className="orbitron intel-date">{new Date(sub.createdAt).toLocaleDateString()}</small>
                                                 </div>
                                             </div>
                                             <div className="intel-right">
-                                                <div className="status-label orbitron">INTEGRITY_STATUS</div>
-                                                <div className="status-val orbitron" style={{ color: sub.tabSwitches > 0 ? '#ff4d4d' : '#00ffa3' }}>
-                                                    {sub.tabSwitches > 0 ? `BREACH_DET_(${sub.tabSwitches})` : 'SECURE'}
+                                                <div className="status-label orbitron">Session Status</div>
+                                                <div className="status-val orbitron" style={{ color: sub.tabSwitches > 0 ? '#ef4444' : '#10b981' }}>
+                                                    {sub.tabSwitches > 0 ? `Tab Switches (${sub.tabSwitches})` : 'No Issues'}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {expandedExam === sub._id && (
                                             <div className="intel-body-expansion">
-                                                <div className="ai-feedback-header orbitron">➲ AI_NEURAL_DEBRIEF:</div>
+                                                <div className="ai-feedback-header orbitron">AI Analysis:</div>
                                                 {sub.detailed_results?.map((res, i) => (
                                                     <div key={i} className="feedback-module">
-                                                        <p className="q-text"><strong>UNIT_{i+1}:</strong> {res.question}</p>
-                                                        <p className="ai-text"><strong>ANALYSIS:</strong> {res.ai_feedback}</p>
+                                                        <p className="q-text"><strong>Question {i+1}:</strong> {res.question}</p>
+                                                        <p className="ai-text"><strong>Analysis:</strong> {res.ai_feedback}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -303,7 +301,7 @@ const Dashboard = () => {
 
                 .scio-root-container {
                     display: flex; width: 100vw; height: 100vh;
-                    background: #020202; color: #fff; font-family: 'Inter', sans-serif;
+                    background: #fafafa; color: #1a1a2e; font-family: 'Inter', sans-serif;
                     overflow: hidden;
                 }
 
@@ -311,106 +309,110 @@ const Dashboard = () => {
 
                 /* 🌑 Sidebar Console */
                 .sidebar-console {
-                    width: 320px; background: rgba(10, 10, 10, 0.9);
+                    width: 320px; background: linear-gradient(135deg, #16213e, #1a1a2e);
                     backdrop-filter: blur(25px); padding: 40px 25px;
-                    border-right: 1px solid rgba(255, 255, 255, 0.05);
+                    border-right: 1px solid rgba(255, 255, 255, 0.08);
                     display: flex; flex-direction: column; z-index: 50;
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
                 }
 
-                .main-logo { font-size: 32px; letter-spacing: 8px; margin: 0; }
-                .main-logo .accent { color: #00d2ff; }
-                .version-tag { font-size: 9px; color: #444; letter-spacing: 4px; margin-top: 5px; text-align: center; }
+                .main-logo { font-size: 32px; letter-spacing: 8px; margin: 0; color: #ffffff; }
+                .main-logo .accent { color: #5B4FFF; }
+                .version-tag { font-size: 9px; color: #a0a0b0; letter-spacing: 4px; margin-top: 5px; text-align: center; text-transform: uppercase; }
 
                 .nav-stack { flex: 1; margin-top: 60px; }
 
                 .user-profile-module {
-                    background: rgba(255, 255, 255, 0.02); padding: 15px;
+                    background: rgba(255, 255, 255, 0.05); padding: 15px;
                     border-radius: 18px; display: flex; align-items: center;
-                    gap: 15px; margin-bottom: 20px; border: 1px solid #111;
+                    gap: 15px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.08);
                 }
 
                 .avatar-orb {
-                    width: 45px; height: 45px; background: #00d2ff; color: #000;
+                    width: 45px; height: 45px; background: #5B4FFF; color: #ffffff;
                     border-radius: 12px; display: flex; justify-content: center;
                     align-items: center; font-weight: 900; font-size: 20px;
                 }
 
-                .profile-name { font-weight: 700; font-size: 15px; }
-                .profile-status { font-size: 9px; color: #00ffa3; }
+                .profile-name { font-weight: 700; font-size: 15px; color: #ffffff; }
+                .profile-status { font-size: 9px; color: #10b981; }
 
                 .disconnect-trigger {
-                    background: transparent; border: 1px solid #ff4d4d; color: #ff4d4d;
-                    padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 900;
-                    transition: 0.3s; font-size: 12px;
+                    background: transparent; border: 2px solid #ef4444; color: #ef4444;
+                    padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600;
+                    transition: 0.3s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
                 }
-                .disconnect-trigger:hover { background: #ff4d4d; color: #000; }
+                .disconnect-trigger:hover { background: #ef4444; color: #ffffff; }
 
                 /* 🚀 Main Viewport */
                 .viewport-main { flex: 1; display: flex; flex-direction: column; padding: 50px 80px; overflow-y: auto; position: relative; }
                 .viewport-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
-                .welcome-text { font-size: 42px; font-weight: 900; margin: 0; }
-                .user-glow { color: #00d2ff; text-shadow: 0 0 20px rgba(0, 210, 255, 0.3); }
-                .system-subtitle { color: #444; margin-top: 10px; letter-spacing: 1px; }
-                .status-green { color: #00ffa3; }
+                .welcome-text { font-size: 42px; font-weight: 900; margin: 0; color: #1a1a2e; }
+                .user-glow { color: #5B4FFF; text-shadow: 0 0 20px rgba(91, 79, 255, 0.3); }
+                .system-subtitle { color: #a0a0b0; margin-top: 10px; letter-spacing: 1px; }
+                .status-green { color: #10b981; }
 
                 .hud-indicators { display: flex; gap: 15px; }
                 .hud-pill {
-                    padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.05);
-                    background: rgba(255, 255, 255, 0.02); font-size: 10px; color: #555;
+                    padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff; font-size: 10px; color: #6b7280;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                 }
-                .ai-pill { border-color: rgba(0, 255, 163, 0.2); color: #00ffa3; }
+                .ai-pill { border-color: rgba(16, 185, 129, 0.2); color: #10b981; }
 
                 /* 📁 Grid Cards */
                 .quiz-data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px; }
-                .mission-card { background: rgba(255, 255, 255, 0.02); padding: 40px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.08); transition: 0.4s; position: relative; }
-                .mission-card:hover { transform: translateY(-10px); border-color: #00d2ff; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); }
+                .mission-card { background: #ffffff; padding: 48px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); transition: 0.4s; position: relative; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .mission-card:hover { transform: translateY(-10px); border-color: #5B4FFF; box-shadow: 0 8px 32px rgba(91, 79, 255, 0.25); }
 
                 .card-top { display: flex; justify-content: space-between; align-items: center; }
                 .purge-btn {
-                    background: transparent; border: none; color: #333;
+                    background: transparent; border: none; color: #a0a0b0;
                     font-size: 16px; cursor: pointer; transition: 0.3s;
                 }
-                .purge-btn:hover { color: #ff4d4d; transform: scale(1.2); text-shadow: 0 0 10px #ff4d4d; }
+                .purge-btn:hover { color: #ef4444; transform: scale(1.2); text-shadow: 0 0 10px #ef4444; }
 
-                .node-id { font-size: 10px; color: #333; }
-                .quiz-title { font-size: 24px; color: #00d2ff; margin: 15px 0 5px 0; }
-                .quiz-meta { color: #555; font-size: 14px; margin-bottom: 35px; }
+                .node-id { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; }
+                .quiz-title { font-size: 24px; color: #1a1a2e; margin: 15px 0 5px 0; font-weight: 800; }
+                .quiz-meta { color: #a0a0b0; font-size: 14px; margin-bottom: 35px; }
 
                 .card-footer { display: flex; gap: 15px; }
-                .primary-action-btn { flex: 1; padding: 15px; background: #00d2ff; color: #000; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; }
-                .secondary-icon-btn { padding: 15px; background: transparent; border: 1px solid #222; color: #fff; border-radius: 12px; cursor: pointer; transition: 0.3s; }
-                .secondary-icon-btn:hover { border-color: #00d2ff; color: #00d2ff; }
+                .primary-action-btn { flex: 1; padding: 15px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+                .primary-action-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
+                .secondary-icon-btn { padding: 15px; background: transparent; border: 2px solid #5B4FFF; color: #5B4FFF; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+                .secondary-icon-btn:hover { background: #5B4FFF; color: #ffffff; }
 
                 /* 🛰️ Portal UI */
                 .portal-entry-zone { height: 60vh; display: flex; justify-content: center; align-items: center; }
-                .portal-module { width: 100%; max-width: 650px; padding: 80px; text-align: center; position: relative; overflow: hidden; }
-                .laser-scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #00d2ff; box-shadow: 0 0 20px #00d2ff; animation: scanHUD 4s infinite linear; }
-                .portal-title { font-size: 28px; letter-spacing: 10px; margin-bottom: 20px; }
-                .portal-desc { color: #555; margin-bottom: 50px; line-height: 1.6; }
-                .tactical-text-input { width: 100%; padding: 22px; background: #000; border: 1px solid #222; border-radius: 18px; color: #00d2ff; font-family: 'Orbitron'; text-align: center; font-size: 22px; margin-bottom: 40px; outline: none; }
-                .portal-launch-btn { width: 100%; padding: 22px; background: linear-gradient(45deg, #00d2ff, #9d50bb); border: none; border-radius: 18px; color: #fff; font-weight: 900; font-size: 20px; cursor: pointer; box-shadow: 0 10px 40px rgba(0, 210, 255, 0.3); }
+                .portal-module { width: 100%; max-width: 650px; padding: 80px; text-align: center; position: relative; overflow: hidden; background: #ffffff; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .laser-scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #5B4FFF; box-shadow: 0 0 20px #5B4FFF; animation: scanHUD 4s infinite linear; }
+                .portal-title { font-size: 28px; letter-spacing: 10px; margin-bottom: 20px; color: #1a1a2e; text-transform: uppercase; font-weight: 800; }
+                .portal-desc { color: #a0a0b0; margin-bottom: 50px; line-height: 1.6; }
+                .session-input { width: 100%; padding: 22px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 18px; color: #1a1a2e; font-family: 'Inter'; text-align: center; font-size: 22px; margin-bottom: 40px; outline: none; font-weight: 600; }
+                .session-input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
+                .portal-launch-btn { width: 100%; padding: 22px; background: #1a1a2e; border: none; border-radius: 18px; color: #ffffff; font-weight: 600; font-size: 20px; cursor: pointer; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; }
+                .portal-launch-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
 
                 /* 🏅 Intelligence Logs */
-                .intel-entry { background: rgba(255, 255, 255, 0.02); border: 1px solid #111; border-radius: 24px; margin-bottom: 20px; overflow: hidden; transition: 0.3s; }
+                .intel-entry { background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; margin-bottom: 20px; overflow: hidden; transition: 0.3s; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
                 .intel-header { padding: 30px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
                 .intel-left { display: flex; align-items: center; gap: 30px; }
                 .rank-orb { width: 70px; height: 70px; border: 3px solid; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 18px; }
-                .intel-title { font-size: 20px; margin: 0 0 5px 0; }
-                .intel-date { font-size: 9px; color: #444; }
+                .intel-title { font-size: 20px; margin: 0 0 5px 0; color: #1a1a2e; font-weight: 700; }
+                .intel-date { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; }
                 .intel-right { text-align: right; }
-                .status-label { font-size: 9px; color: #333; margin-bottom: 5px; }
+                .status-label { font-size: 9px; color: #6b7280; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
                 .status-val { font-size: 13px; font-weight: 700; }
-                .intel-body-expansion { padding: 40px; background: rgba(0, 0, 0, 0.3); border-top: 1px solid #111; }
-                .ai-feedback-header { color: #00d2ff; font-size: 11px; margin-bottom: 25px; }
-                .feedback-module { padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 15px; margin-bottom: 15px; border-left: 4px solid #00d2ff; }
-                .q-text { font-size: 14px; margin: 0 0 8px 0; }
-                .ai-text { font-size: 13px; color: #888; font-style: italic; margin: 0; }
+                .intel-body-expansion { padding: 40px; background: #f5f5f5; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+                .ai-feedback-header { color: #5B4FFF; font-size: 11px; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 3px; }
+                .feedback-module { padding: 20px; background: #ffffff; border-radius: 15px; margin-bottom: 15px; border-left: 4px solid #5B4FFF; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+                .q-text { font-size: 14px; margin: 0 0 8px 0; color: #1a1a2e; }
+                .ai-text { font-size: 13px; color: #a0a0b0; font-style: italic; margin: 0; }
 
                 @keyframes scanHUD { 0% { top: 0; } 100% { top: 100%; } }
-                .loading-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #000; color: #00d2ff; font-family: 'Orbitron'; }
+                .loading-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #fafafa; color: #5B4FFF; font-family: 'Inter', sans-serif; }
                 .pulse { animation: pulseHUD 2s infinite; }
                 @keyframes pulseHUD { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-                .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 100; }
             `}</style>
         </div>
     );
