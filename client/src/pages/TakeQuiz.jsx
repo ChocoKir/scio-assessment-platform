@@ -16,13 +16,14 @@ const TakeQuiz = () => {
     const [examStarted, setExamStarted] = useState(false);
     const [systemReady, setSystemReady] = useState(false);
 
-    // ➲ UPGRADE: Separated Camera State
+    // 2. CAMERA SETUP
     const [cameraStream, setCameraStream] = useState(null);
     const [cameraReady, setCameraReady] = useState(false);
 
-    // --- TRACKING & TELEMETRY ---
+    // 3. TIMER & MONITORING
     const [timeLeft, setTimeLeft] = useState(300);
     const [tabSwitches, setTabSwitches] = useState(0);
+    const [violations, setViolations] = useState(0);
     const [notify, setNotify] = useState({ message: '', type: '' });
 
     const [isRedAlert, setIsRedAlert] = useState(false);
@@ -34,15 +35,15 @@ const TakeQuiz = () => {
         faceMissingDetected: false
     });
 
-    // --- VISION ENGINE REFS ---
+    // 4. VISION ENGINE REFS ---
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const wsRef = useRef(null);
     const processedImgRef = useRef(null);
     const [proctorStatus, setProctorStatus] = useState("orange");
-    const [proctorMessage, setProctorMessage] = useState("SYNCING NEURAL SENSORS...");
+    const [proctorMessage, setProctorMessage] = useState("Initializing cameras...");
 
-    // 1. 🛰️ INITIALIZATION PROTOCOL (Fetch Data)
+    // 1. CAMERA SETUP
     useEffect(() => {
         const storedUser = localStorage.getItem('scio_user');
         if (!storedUser) return navigate('/login');
@@ -57,7 +58,7 @@ const TakeQuiz = () => {
                     if (data.timeLimit) setTimeLeft(data.timeLimit * 60);
                 }
             } catch (error) {
-                setNotify({ message: 'FETCH_ERROR: Connection to quiz database failed.', type: 'error' });
+                setNotify({ message: 'Could not load assessment. Please try again.', type: 'error' });
             }
         };
         fetchQuiz();
@@ -65,7 +66,7 @@ const TakeQuiz = () => {
         return () => clearTimeout(bootTimer);
     }, [quizId, navigate]);
 
-    // ➲ 1.5. PRE-FLIGHT CAMERA CHECK (Runs immediately on load)
+    // 1.5. PRE-FLIGHT CAMERA CHECK (Runs immediately on load)
     useEffect(() => {
         let activeStream = null;
         const initCamera = async () => {
@@ -75,7 +76,7 @@ const TakeQuiz = () => {
                 setCameraStream(activeStream);
                 setCameraReady(true);
             } catch (err) {
-                setNotify({ message: 'HARDWARE_ERR: Please allow camera permissions.', type: 'error' });
+                setNotify({ message: 'Access denied. Teacher access required.', type: 'error' });
             }
         };
         initCamera();
@@ -88,7 +89,7 @@ const TakeQuiz = () => {
         };
     }, []);
 
-    // 2. 🚨 AUDIO SYNTHESIZER
+    // 2. HANDLERSIZER
     const triggerRedAlert = () => {
         setIsRedAlert(true);
         if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
@@ -108,7 +109,7 @@ const TakeQuiz = () => {
         setTimeout(() => setIsRedAlert(false), 2000);
     };
 
-    // 3. 🔒 SECURITY OVERRIDE (Anti-Cheat Blocks)
+    // 3. SECURITY OVERRIDE (Anti-Cheat Blocks)
     useEffect(() => {
         if (!examStarted || isSubmitted) return;
         const preventAction = (e) => e.preventDefault();
@@ -117,7 +118,7 @@ const TakeQuiz = () => {
             if (document.hidden || !document.fullscreenElement) {
                 setTabSwitches(prev => prev + 1);
                 triggerRedAlert();
-                setNotify({ message: 'SECURITY_BREACH: Terminal focus lost. Protocol violation logged.', type: 'error' });
+                setNotify({ message: 'Security breach detected. Please stay focused on the assessment.', type: 'error' });
             }
         };
 
@@ -138,7 +139,7 @@ const TakeQuiz = () => {
         };
     }, [examStarted, isSubmitted]);
 
-    // 4. ⏱️ QUANTUM TIMER
+    // 4. QUANTUM TIMER
     useEffect(() => {
         if (!examStarted || isSubmitted || isGrading) return;
         if (timeLeft <= 0) {
@@ -149,7 +150,7 @@ const TakeQuiz = () => {
         return () => clearInterval(timerId);
     }, [timeLeft, isSubmitted, isGrading, examStarted]);
 
-    // 5. 👁️ AI VISION ENGINE (Attaches stream & starts WebSocket)
+    // 5. AI VISION ENGINE (Attaches stream & starts WebSocket)
     useEffect(() => {
         if (!examStarted || !cameraStream) return;
 
@@ -169,9 +170,21 @@ const TakeQuiz = () => {
 
             if (data.status === "red") triggerRedAlert();
 
-            if (data.phone) setTelemetry(prev => ({ ...prev, phoneDetected: true }));
-            if (data.persons > 1) setTelemetry(prev => ({ ...prev, multipleFacesDetected: true }));
-            if (data.persons === 0) setTelemetry(prev => ({ ...prev, faceMissingDetected: true }));
+            if (data.phone) {
+                setTelemetry(prev => ({ ...prev, phoneDetected: true }));
+                setViolations(prev => prev + 1);
+                setNotify({ message: 'Phone detected. This is a security violation.', type: 'error' });
+            }
+            if (data.persons > 1) {
+                setTelemetry(prev => ({ ...prev, multipleFacesDetected: true }));
+                setViolations(prev => prev + 1);
+                setNotify({ message: 'Multiple subjects detected. This is a security violation.', type: 'error' });
+            }
+            if (data.persons === 0) {
+                setTelemetry(prev => ({ ...prev, faceMissingDetected: true }));
+                setViolations(prev => prev + 1);
+                setNotify({ message: 'Face not detected. Please remain visible.', type: 'warning' });
+            }
 
             if (data.frame && processedImgRef.current) {
                 processedImgRef.current.src = data.frame;
@@ -195,7 +208,7 @@ const TakeQuiz = () => {
         };
     }, [examStarted, cameraStream]);
 
-    // 6. 📤 THE MASTER SUBMISSION
+    // 6. THE MASTER SUBMISSION
     const processSubmission = async () => {
         setIsGrading(true);
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -238,10 +251,10 @@ const TakeQuiz = () => {
                 });
 
                 setIsSubmitted(true);
-                setNotify({ message: 'MISSION_COMPLETE: Logged to Archive.', type: 'success' });
+                setNotify({ message: 'Loading results...', type: 'info' });
             }
         } catch (error) {
-            setNotify({ message: `UPLINK_FAILURE: ${error.message}`, type: 'error' });
+            setNotify({ message: 'Could not load results. Please try again.', type: 'error' });
         } finally {
             setIsGrading(false);
         }
@@ -257,7 +270,7 @@ const TakeQuiz = () => {
         audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
         audioCtxRef.current.resume();
         setExamStarted(true);
-        setNotify({ message: 'NEURAL_LINK: Established.', type: 'success' });
+                setNotify({ message: 'Connection established.', type: 'success' });
     };
 
     const formatTime = (seconds) => {
@@ -287,16 +300,16 @@ const TakeQuiz = () => {
             <div className="results-root">
                 <div className="results-container glass-panel">
                     <header className="results-header">
-                        <h1 className="orbitron">MISSION_COMPLETE</h1>
+                        <h1 className="orbitron">ASSESSMENT_COMPLETE</h1>
                         <p className="mono">ID: {quizId.toUpperCase()}</p>
                     </header>
                     <div className="results-grid">
                         <div className="analysis-panel glass-panel">
-                            <div className="panel-label orbitron">AI_LOG_ANALYSIS</div>
+                            <div className="panel-label orbitron">AI_ANALYSIS</div>
                             <div className="feedback-list">
                                 {gradeReport.detailed_results.map((res, i) => (
                                     <div key={i} className="feedback-item" style={{ borderLeftColor: res.awarded_marks > 0 ? '#00ffa3' : '#ff4d4d' }}>
-                                        <p className="q-text mono"><strong>MOD_{i+1}:</strong> {res.question}</p>
+                                        <p className="q-text mono"><strong>Question {i+1}:</strong> {res.question}</p>
                                         <p className="ai-note italic">"{res.ai_feedback}"</p>
                                     </div>
                                 ))}
@@ -307,7 +320,7 @@ const TakeQuiz = () => {
                             <div className="rank-letter" style={{ color: rank.c }}>{rank.l}</div>
                             <div className="percentage-text orbitron">{gradeReport.percentage}%</div>
                             <div className="raw-score mono">{gradeReport.final_score} / {gradeReport.total_possible} PTS</div>
-                            <button onClick={() => navigate('/dashboard')} className="return-btn orbitron">RETURN_TO_BASE</button>
+                            <button onClick={() => navigate('/dashboard')} className="return-btn orbitron">RETURN_TO_DASHBOARD</button>
                         </div>
                     </div>
                 </div>
@@ -318,32 +331,31 @@ const TakeQuiz = () => {
     if (!examStarted) {
         return (
             <div className="waiting-root">
-                <div className="scanline"></div>
                 <div className="waiting-content">
                     <h1 className="orbitron waiting-title">{quiz.title}</h1>
                     <div className="system-checks">
                         {/* ➲ UPGRADE: Dynamic Sensor Checking */}
                         <div className="check-box glass-panel">
-                            <small className="orbitron">SENSORS</small>
-                            <div className="status-text" style={{ color: cameraReady ? '#00ffa3' : '#ffc107' }}>
-                                {cameraReady ? 'ONLINE' : 'AWAITING PERMISSION...'}
+                            <small className="orbitron">CAMERA</small>
+                            <div className="status-text" style={{ color: cameraReady ? '#10b981' : '#f59e0b' }}>
+                                {cameraReady ? 'Ready' : 'Waiting for permission...'}
                             </div>
                         </div>
                         <div className="check-box glass-panel">
-                            <small className="orbitron">ENCRYPTION</small>
-                            <div className="status-text" style={{ color: '#00ffa3' }}>ONLINE</div>
+                            <small className="orbitron">SYSTEM</small>
+                            <div className="status-text" style={{ color: '#10b981' }}>Online</div>
                         </div>
                         <div className="check-box glass-panel">
-                            <small className="orbitron">AI_CORE</small>
-                            <div className="status-text" style={{ color: systemReady ? '#00ffa3' : '#333' }}>
-                                {systemReady ? 'ONLINE' : 'BOOTING...'}
+                            <small className="orbitron">AI</small>
+                            <div className="status-text" style={{ color: systemReady ? '#10b981' : '#6b7280' }}>
+                                {systemReady ? 'Ready' : 'Loading...'}
                             </div>
                         </div>
                     </div>
 
                     {/* ➲ UPGRADE: Button waits for camera to be allowed */}
                     <button onClick={handleStartExam} disabled={!systemReady || !cameraReady} className={`init-btn orbitron ${(systemReady && cameraReady) ? 'ready' : ''}`}>
-                        {(systemReady && cameraReady) ? 'INITIATE NEURAL LINK' : 'PREPARING HARDWARE...'}
+                        {(systemReady && cameraReady) ? 'Start Assessment' : 'Preparing hardware...'}
                     </button>
                 </div>
                 <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
@@ -353,7 +365,6 @@ const TakeQuiz = () => {
 
     return (
         <div className={`exam-hud-root ${isRedAlert ? 'red-alert-active' : ''}`}>
-            <div className="scanline"></div>
             <header className="hud-header">
                 <div className="orbitron session-id">SESSION_#{quizId.slice(-4)}</div>
                 <div className="timer-module">
@@ -361,8 +372,8 @@ const TakeQuiz = () => {
                     <div className="progress-track"><div className="progress-fill" style={{ width: `${(Object.keys(answers).length / quiz.questions.length) * 100}%` }}></div></div>
                 </div>
                 <div className="strike-module">
-                    <small className="orbitron">SECURITY_STRIKES</small>
-                    <div className="strike-count orbitron" style={{ color: tabSwitches > 0 ? '#ff4d4d' : '#00ffa3' }}>{tabSwitches}</div>
+                    <small className="orbitron">VIOLATIONS</small>
+                    <div className="status-text" style={{ color: violations > 0 ? '#ef4444' : '#10b981' }}>{violations}</div>
                 </div>
             </header>
 
@@ -380,7 +391,7 @@ const TakeQuiz = () => {
                         <div key={q._id} className="question-node">
                             <div className="node-number orbitron">0{i+1}</div>
                             <div className="node-content glass-panel">
-                                <h3 className="q-prompt">{q.question}</h3>
+                                <p className="q-prompt">{q.question}</p>
                                 <div className="answer-zone">
                                     {q.type === 'mcq' ? (
                                         <div className="mcq-options-container">
@@ -392,7 +403,7 @@ const TakeQuiz = () => {
                                             ))}
                                         </div>
                                     ) : (
-                                        <textarea rows="4" className="text-answer-input mono" placeholder="AWAITING_NEURAL_RESPONSE..." value={answers[q._id] || ''} onChange={(e) => handleAnswerChange(q._id, e.target.value)} required />
+                                        <textarea rows="4" className="text-answer-input mono" placeholder="Type your answer..." value={answers[q._id] || ''} onChange={(e) => handleAnswerChange(q._id, e.target.value)} required />
                                     )}
                                 </div>
                             </div>
@@ -400,73 +411,72 @@ const TakeQuiz = () => {
                     ))}
                     <div className="submit-container">
                         <button type="submit" disabled={isGrading} className={`finalize-btn orbitron ${isGrading ? 'loading' : ''}`}>
-                            {isGrading ? 'PROCESSING_NEURAL_DATA...' : 'FINALIZE_UPLINK'}
+                            {isGrading ? 'Processing...' : 'Submit Assessment'}
                         </button>
                     </div>
                 </form>
             </main>
             <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
-
-            <style>{`
-                .exam-hud-root, .waiting-root, .results-root { min-height: 100vh; background: #030303; color: #fff; font-family: 'Inter', sans-serif; transition: background-color 0.15s ease-in-out; }
+            <style>
+                {`
+                .exam-hud-root, .waiting-root, .results-root { min-height: 100vh; background: #fafafa; color: #1a1a2e; font-family: 'Inter', sans-serif; transition: background-color 0.15s ease-in-out; }
                 
-                .red-alert-active { background: #3a0000 !important; }
-                .red-alert-active .scanline { background: linear-gradient(rgba(255,0,0,0.1) 50%, rgba(0,0,0,0.1) 50%); }
+                .red-alert-active { background: #fef2f2 !important; }
 
-                .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.02), rgba(0,255,0,0.01), rgba(0,0,255,0.02)); background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 999; }
                 .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
                 .mono { font-family: 'JetBrains Mono', monospace; }
                 .italic { font-style: italic; }
 
-                .hud-header { position: sticky; top: 0; z-index: 100; background: rgba(5,5,5,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #222; padding: 20px 60px; display: flex; justify-content: space-between; align-items: center; }
-                .time-display { font-size: 32px; font-weight: 900; }
-                .progress-track { height: 3px; width: 200px; background: #111; margin-top: 5px; border-radius: 50px; overflow: hidden; }
-                .progress-fill { height: 100%; background: #00d2ff; transition: 0.5s; box-shadow: 0 0 10px #00d2ff; }
+                .hud-header { position: sticky; top: 0; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; padding: 20px 60px; display: flex; justify-content: space-between; align-items: center; }
+                .time-display { font-size: 32px; font-weight: 900; color: #1a1a2e; }
+                .progress-track { height: 3px; width: 200px; background: #e5e7eb; margin-top: 5px; border-radius: 50px; overflow: hidden; }
+                .progress-fill { height: 100%; background: #5B4FFF; transition: 0.5s; box-shadow: 0 0 10px #5B4FFF; }
                 
-                .proctor-hud { position: fixed; bottom: 40px; right: 40px; width: 300px; border-radius: 25px; border: 2px solid; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,1); z-index: 1000; transition: 0.3s; background: #000; }
+                .proctor-hud { position: fixed; bottom: 40px; right: 40px; width: 300px; border-radius: 25px; border: 2px solid #5B4FFF; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); z-index: 1000; transition: 0.3s; background: #ffffff; }
                 .ai-view-img { width: 100%; display: block; filter: grayscale(0.2) contrast(1.2); }
-                .proctor-msg { color: #000; padding: 12px; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }
+                .proctor-msg { color: #1a1a2e; padding: 12px; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }
                 .laser-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; box-shadow: 0 0 15px currentColor; animation: scanHUD 3s linear infinite; z-index: 2; }
 
                 .question-stream { max-width: 1000px; margin: 0 auto; padding: 60px 40px; }
                 .question-node { display: grid; grid-template-columns: 80px 1fr; gap: 20px; margin-bottom: 50px; }
-                .node-number { font-size: 24px; color: #222; text-align: right; margin-top: 20px; }
-                .node-content { padding: 40px; border: 1px solid rgba(0, 210, 255, 0.1); border-radius: 20px; background: rgba(10,10,10,0.8); }
-                .q-prompt { font-size: 18px; margin-bottom: 30px; line-height: 1.6; }
+                .node-number { font-size: 24px; color: #6b7280; text-align: right; margin-top: 20px; }
+                .node-content { padding: 40px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; background: #ffffff; }
+                .q-prompt { font-size: 18px; margin-bottom: 30px; line-height: 1.6; color: #1a1a2e; }
                 
-                .text-answer-input { width: 100%; padding: 20px; background: #000; border: 1px solid #222; border-radius: 12px; color: #00d2ff; outline: none; transition: 0.3s; font-size: 14px; }
-                .text-answer-input:focus { border-color: #00d2ff; box-shadow: 0 0 15px rgba(0,210,255,0.1); }
+                .text-answer-input { width: 100%; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; color: #1a1a2e; outline: none; transition: 0.3s; font-size: 14px; }
+                .text-answer-input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
 
                 .mcq-options-container { display: flex; flex-direction: column; gap: 15px; }
-                .mcq-label { display: flex; align-items: center; gap: 15px; padding: 20px; background: #000; border: 1px solid #222; border-radius: 12px; cursor: pointer; transition: 0.3s; }
-                .mcq-label.selected { border-color: #9d50bb; background: rgba(157, 80, 187, 0.05); color: #fff; }
+                .mcq-label { display: flex; align-items: center; gap: 15px; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+                .mcq-label.selected { border-color: #5B4FFF; background: rgba(91, 79, 255, 0.05); color: #1a1a2e; }
                 .mcq-label input { display: none; }
 
-                .finalize-btn { width: 100%; padding: 25px; background: linear-gradient(45deg, #00ffa3, #00d2ff); color: #000; border: none; border-radius: 15px; font-weight: 900; font-size: 18px; cursor: pointer; transition: 0.3s; }
-                .finalize-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(0,255,163,0.3); }
-                .finalize-btn.loading { background: #111; color: #444; cursor: not-allowed; }
+                .finalize-btn { width: 100%; padding: 25px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 15px; font-weight: 600; font-size: 18px; cursor: pointer; transition: 0.3s; }
+                .finalize-btn:hover { background: #5B4FFF; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
+                .finalize-btn.loading { background: #f5f5f5; color: #5B4FFF; cursor: not-allowed; }
 
                 .waiting-content { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; position: relative; }
-                .waiting-title { font-size: 48px; color: #00d2ff; margin-bottom: 40px; text-shadow: 0 0 20px rgba(0,210,255,0.3); }
+                .waiting-title { font-size: 48px; color: #1a1a2e; margin-bottom: 40px; text-shadow: 0 0 20px rgba(91, 79, 255, 0.3); }
                 
                 .system-checks { display: flex; gap: 20px; margin-bottom: 40px; }
-                .check-box { padding: 20px 30px; border-radius: 15px; text-align: center; border: 1px solid rgba(0,210,255,0.2); background: rgba(10,10,10,0.8); }
-                .check-box small { color: #555; letter-spacing: 2px; }
-                .status-text { font-weight: 900; font-size: 18px; margin-top: 10px; }
+                .check-box { padding: 20px 30px; border-radius: 15px; text-align: center; border: 1px solid rgba(91, 79, 255, 0.2); background: #ffffff; }
+                .check-box small { color: #6b7280; letter-spacing: 2px; }
+                .status-text { font-weight: 900; font-size: 18px; margin-top: 10px; color: #1a1a2e; }
 
-                .init-btn { padding: 20px 50px; background: #111; color: #444; border: none; border-radius: 15px; font-size: 16px; transition: 0.3s; letter-spacing: 2px; font-weight: 900; }
-                .init-btn.ready { background: #00ffa3; color: #000; cursor: pointer; box-shadow: 0 0 30px rgba(0,255,163,0.3); }
-                .init-btn.ready:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(0,255,163,0.5); }
+                .init-btn { padding: 20px 50px; background: #f5f5f5; color: #1a1a2e; border: none; border-radius: 15px; font-size: 16px; transition: 0.3s; letter-spacing: 2px; font-weight: 900; }
+                .init-btn.ready { background: #5B4FFF; color: #ffffff; cursor: pointer; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .init-btn.ready:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
 
-                .results-root { display: flex; justify-content: center; align-items: center; padding: 40px; }
-                .results-container { width: 100%; max-width: 1100px; padding: 60px; }
-                .rank-letter { font-size: 160px; font-weight: 900; line-height: 1; margin: 20px 0; text-shadow: 0 0 40px currentColor; }
-                .return-btn { width: 100%; padding: 20px; background: transparent; border: 1px solid #00d2ff; color: #00d2ff; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-top: 40px; font-weight: bold; }
-                .return-btn:hover { background: #00d2ff; color: #000; }
+                .results-root { display: flex; justify-content: center; align-items: center; padding: 40px; background: #fafafa; }
+                .results-container { width: 100%; max-width: 1100px; padding: 60px; background: #ffffff; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .rank-letter { font-size: 160px; font-weight: 900; line-height: 1; margin: 20px 0; text-shadow: 0 0 40px currentColor; color: #1a1a2e; }
+                .return-btn { width: 100%; padding: 20px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-top: 40px; font-weight: bold; }
+                .return-btn:hover { background: #5B4FFF; color: #ffffff; }
 
                 @keyframes scanHUD { 0% { top: 0%; } 100% { top: 100%; } }
-                .boot-loader { height: 100vh; display: flex; justify-content: center; align-items: center; background: #000; color: #00d2ff; font-size: 20px; }
-            `}</style>
+                .boot-loader { height: 100vh; display: flex; justify-content: center; align-items: center; background: #fafafa; color: #5B4FFF; font-size: 20px; }
+                `}
+            </style>
         </div>
     );
 };

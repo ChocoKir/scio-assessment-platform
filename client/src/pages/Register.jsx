@@ -30,14 +30,15 @@ const Register = () => {
             if (response.ok) {
                 // ➲ CRITICAL: Save the exact same key the Dashboard looks for
                 localStorage.setItem('scio_user', JSON.stringify(data));
-                setNotify({ message: 'IDENTITY_FORGED: Welcome to SCIO, Agent.', type: 'success' });
+                setNotify({ message: 'Account created successfully! Welcome to SCIO.', type: 'success' });
 
                 setTimeout(() => navigate('/dashboard'), 1500);
             } else {
-                setNotify({ message: data.message || 'FORGE_FAILED: Identity rejected.', type: 'error' });
+                setNotify({ message: data.message || 'Registration failed. Please try again.', type: 'error' });
+                
             }
         } catch (err) {
-            setNotify({ message: 'LINK_FAILURE: Neural core unreachable.', type: 'error' });
+            setNotify({ message: 'Connection error. Please check your internet.', type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -45,19 +46,17 @@ const Register = () => {
 
     return (
         <div className="register-root">
-            <div className="scanline"></div>
-
-            {/* 🌑 TERMINAL MODULE */}
+            {/* TERMINAL MODULE */}
             <div className="terminal-card glass-panel">
                 <header style={{ marginBottom: '30px' }}>
                     <h1 className="orbitron title">SCIO</h1>
-                    <p className="orbitron subtitle">NEW_ENTITY_REGISTRATION</p>
+                    <p className="orbitron subtitle">CREATE_ACCOUNT</p>
                 </header>
 
                 <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
                     <div className="input-field">
-                        <label className="orbitron">ENTITY_DESIGNATION (NAME)</label>
+                        <label className="orbitron">FULL_NAME</label>
                         <input
                             type="text"
                             placeholder="e.g. Kalashiva B P"
@@ -68,7 +67,7 @@ const Register = () => {
                     </div>
 
                     <div className="input-field">
-                        <label className="orbitron">IDENTIFIER_EMAIL</label>
+                        <label className="orbitron">EMAIL_ADDRESS</label>
                         <input
                             type="email"
                             placeholder="agent@scio.io"
@@ -79,7 +78,7 @@ const Register = () => {
                     </div>
 
                     <div className="input-field">
-                        <label className="orbitron">SECURITY_ENCRYPTION (PASSWORD)</label>
+                        <label className="orbitron">PASSWORD</label>
                         <input
                             type="password"
                             placeholder="••••••••"
@@ -90,23 +89,23 @@ const Register = () => {
                         />
                     </div>
 
-                    {/* ➲ ROLE SELECTOR */}
+                    {/* ROLE SELECTOR */}
                     <div className="input-field">
-                        <label className="orbitron">ASSIGN_CLEARANCE_LEVEL</label>
+                        <label className="orbitron">SELECT_ROLE</label>
                         <div className="role-selector">
                             <button
                                 type="button"
                                 className={`role-btn ${role === 'student' ? 'active' : ''}`}
                                 onClick={() => setRole('student')}
                             >
-                                🧑‍🎓 AGENT (STUDENT)
+                                🧑‍🎓 Student
                             </button>
                             <button
                                 type="button"
                                 className={`role-btn ${role === 'teacher' ? 'active' : ''}`}
                                 onClick={() => setRole('teacher')}
                             >
-                                👨‍🏫 COMMANDER (TEACHER)
+                                👨‍🏫 Teacher
                             </button>
                         </div>
                     </div>
@@ -116,16 +115,16 @@ const Register = () => {
                         disabled={isLoading}
                         className={`initiate-btn ${isLoading ? 'loading' : ''}`}
                     >
-                        {isLoading ? 'FORGING...' : 'FORGE_IDENTITY'}
+                        {isLoading ? 'Creating account...' : 'CREATE_ACCOUNT'}
                     </button>
                 </form>
 
                 <div className="footer-links">
-                    <p>Existing Entity? <Link to="/login" className="login-link">Initiate Session</Link></p>
+                    <p>Already have an account? <Link to="/login" className="login-link">Sign In</Link></p>
                 </div>
             </div>
 
-            {/* ➲ Tactical Notification HUD */}
+            {/* Tactical Notification HUD */}
             <Notification
                 message={notify.message}
                 type={notify.type}
@@ -135,76 +134,67 @@ const Register = () => {
             <style>{`
                 .register-root {
                     min-height: 100vh;
+                    background: #fafafa;
+                    color: #1a1a2e;
+                    font-family: 'Inter', sans-serif;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    background: #020202;
-                    color: #fff;
-                    font-family: 'Inter', sans-serif;
-                    overflow-x: hidden;
-                    background-image: radial-gradient(circle at center, rgba(157, 80, 187, 0.05), transparent 70%);
-                    padding: 40px 20px;
+                    padding: 40px;
                 }
 
                 .terminal-card {
                     width: 100%;
                     maxWidth: 480px;
-                    padding: 50px;
+                    padding: 60px;
                     text-align: center;
                     z-index: 10;
-                    background: rgba(10, 10, 10, 0.8);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
-                    border-radius: 20px;
+                    background: linear-gradient(135deg, #16213e, #1a1a2e);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
                     backdrop-filter: blur(20px);
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
                 }
 
                 .orbitron { fontFamily: 'Orbitron', sans-serif; letterSpacing: 1px; }
-                .title { fontSize: 42px; color: #9d50bb; textShadow: 0 0 20px rgba(157, 80, 187, 0.4); margin: 0; }
-                .subtitle { fontSize: 10px; color: #555; marginTop: 10px; letterSpacing: 3px; }
+                .title { fontSize: 42px; color: #1a1a2e; textShadow: 0 0 20px rgba(91, 79, 255, 0.3); margin: 0; }
+                .subtitle { fontSize: 10px; color: #6b7280; marginTop: 10px; letterSpacing: 3px; text-transform: uppercase; }
 
                 .input-field { textAlign: left; }
-                .input-field label { fontSize: 9px; color: #666; marginLeft: 5px; marginBottom: 8px; display: block; }
+                .input-field label { fontSize: 14px; color: #6b7280; marginLeft: 5px; marginBottom: 8px; display: block; text-transform: none; letter-spacing: 0.5px; font-weight: 500; }
                 
                 input {
-                    width: 100%; padding: 15px; background: #000; border: 1px solid #222;
-                    border-radius: 12px; color: #9d50bb; outline: none; font-family: 'monospace';
-                    transition: 0.3s;
+                    width: 100%; padding: 16px 20px; background: #ffffff; border: 1px solid #e5e7eb;
+                    border-radius: 10px; color: #1a1a2e; outline: none; font-family: 'Inter';
+                    font-weight: 400; transition: 0.3s; min-height: 52px; font-size: 15px;
                 }
-                input:focus { border-color: #9d50bb; box-shadow: 0 0 15px rgba(157, 80, 187, 0.2); }
+                input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
 
                 /* Role Selector UI */
                 .role-selector { display: flex; gap: 10px; }
                 .role-btn {
-                    flex: 1; padding: 12px; background: #050505; border: 1px solid #222;
-                    color: #666; border-radius: 10px; cursor: pointer; transition: 0.3s;
-                    font-family: 'Orbitron'; font-size: 10px; font-weight: bold;
+                    flex: 1; padding: 12px; background: #f5f5f5; border: 1px solid #e5e7eb;
+                    color: #a0a0b0; border-radius: 10px; cursor: pointer; transition: 0.3s;
+                    font-family: 'Inter'; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
                 }
-                .role-btn:hover { border-color: #555; color: #fff; }
+                .role-btn:hover { border-color: #5B4FFF; color: #5B4FFF; }
                 .role-btn.active {
-                    background: rgba(157, 80, 187, 0.1); border-color: #9d50bb; color: #9d50bb;
-                    box-shadow: inset 0 0 10px rgba(157, 80, 187, 0.2);
+                    background: #5B4FFF; border-color: #5B4FFF; color: #ffffff;
+                    box-shadow: 0 4px 12px rgba(91, 79, 255, 0.25);
                 }
 
                 .initiate-btn {
-                    width: 100%; padding: 18px; marginTop: 10px;
-                    background: linear-gradient(45deg, #9d50bb, #00d2ff);
-                    color: #fff; border: none; border-radius: 12px; font-weight: 900;
-                    font-family: 'Orbitron'; cursor: pointer; transition: 0.4s;
-                    box-shadow: 0 10px 30px rgba(157, 80, 187, 0.3); letter-spacing: 2px;
+                    width: 100%; padding: 18px 24px; marginTop: 10px;
+                    background: #1a1a2e; color: #ffffff; border: none; border-radius: 10px; font-weight: 600;
+                    font-family: 'Inter'; cursor: pointer; transition: 0.3s;
+                    text-transform: none; letter-spacing: 0.5px; min-height: 52px; font-size: 16px;
                 }
-                .initiate-btn:hover { transform: translateY(-2px); filter: brightness(1.2); box-shadow: 0 15px 40px rgba(157, 80, 187, 0.4); }
-                .initiate-btn.loading { background: #111; cursor: not-allowed; box-shadow: none; }
+                .initiate-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
+                .initiate-btn.loading { background: #f5f5f5; cursor: not-allowed; box-shadow: none; color: #5B4FFF; border: 1px solid #5B4FFF; }
 
-                .footer-links { marginTop: 30px; fontSize: 12px; color: #555; }
-                .login-link { color: #9d50bb; textDecoration: none; fontWeight: bold; transition: 0.3s; }
-                .login-link:hover { textShadow: 0 0 10px #9d50bb; }
-
-                .scanline {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                                linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-                    background-size: 100% 4px, 3px 100%; pointer-events: none; z-index: 100;
-                }
+                .footer-links { marginTop: 30px; fontSize: 12px; color: #a0a0b0; }
+                .login-link { color: #5B4FFF; textDecoration: none; font-weight: 600; transition: 0.3s; }
+                .login-link:hover { color: #9d50bb; }
             `}</style>
         </div>
     );

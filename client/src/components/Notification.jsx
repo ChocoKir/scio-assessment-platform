@@ -34,12 +34,12 @@ const Notification = ({ message, type = 'info', onClose }) => {
 
     if (!message) return null;
 
-    // 2. Expanded Tactical Theme Engine
+    // 2. Theme System
     const themes = {
-        info:    { color: '#00d2ff', label: 'SYSTEM_LOG', icon: '📡' },
-        success: { color: '#00ffa3', label: 'UPLINK_STABLE', icon: '✅' },
-        warning: { color: '#ffc107', label: 'NEURAL_ANOMALY', icon: '⚠️' },
-        error:   { color: '#ff4d4d', label: 'PROTOCOL_BREACH', icon: '🚨' }
+        info:    { color: '#5B4FFF', label: 'SYSTEM', icon: '📡' },
+        success: { color: '#10b981', label: 'SUCCESS', icon: '✅' },
+        warning: { color: '#f59e0b', label: 'WARNING', icon: '⚠️' },
+        error:   { color: '#ef4444', label: 'ERROR', icon: '🚨' }
     };
 
     const active = themes[type] || themes.info;
@@ -72,13 +72,13 @@ const Notification = ({ message, type = 'info', onClose }) => {
                     bottom: 40px;
                     left: 40px;
                     width: 380px;
-                    background: rgba(3, 3, 3, 0.85);
+                    background: linear-gradient(135deg, #16213e, #1a1a2e);
                     backdrop-filter: blur(20px) saturate(180%);
                     -webkit-backdrop-filter: blur(20px) saturate(180%);
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 16px;
                     z-index: 10000;
-                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
                     padding: 20px;
                     animation: hudSlideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
                     overflow: hidden;
@@ -102,13 +102,14 @@ const Notification = ({ message, type = 'info', onClose }) => {
 
                 .notif-label {
                     font-size: 10px;
-                    font-weight: 900;
+                    font-weight: 700;
                     letter-spacing: 2px;
+                    text-transform: uppercase;
                 }
 
                 .notif-message {
                     font-size: 14px;
-                    color: #ccc;
+                    color: #a0a0b0;
                     line-height: 1.5;
                     font-weight: 400;
                 }
@@ -116,12 +117,12 @@ const Notification = ({ message, type = 'info', onClose }) => {
                 .notif-close {
                     background: transparent;
                     border: none;
-                    color: #444;
+                    color: #a0a0b0;
                     cursor: pointer;
                     font-size: 14px;
                     transition: 0.2s;
                 }
-                .notif-close:hover { color: #fff; transform: scale(1.2); }
+                .notif-close:hover { color: #ffffff; transform: scale(1.2); }
 
                 .notif-progress-track {
                     position: absolute;
@@ -145,8 +146,8 @@ const Notification = ({ message, type = 'info', onClose }) => {
                 }
 
                 /* Variant specific glows */
-                .error { border-color: rgba(255, 77, 77, 0.2); }
-                .success { border-color: rgba(0, 255, 163, 0.2); }
+                .error { border-color: rgba(239, 68, 68, 0.2); }
+                .success { border-color: rgba(16, 185, 129, 0.2); }
             `}</style>
         </div>
     );

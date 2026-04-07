@@ -18,10 +18,10 @@ function App() {
     useEffect(() => {
         // --- System BIOS Emulation ---
         const logs = [
-            'MOUNTING_NEURAL_CORE...',
-            'ESTABLISHING_MONGODB_UPLINK...',
-            'SYNCING_YOLO_VISION_SENSORS...',
-            'DECRYPTING_AI_GRADING_PROTOCOLS...',
+            'Initializing system...',
+            'Connecting to database...',
+            'Loading AI components...',
+            'Preparing assessment engine...',
             'SYSTEM_CHECK_NOMINAL_100%'
         ];
 
@@ -81,9 +81,6 @@ function App() {
 
     return (
         <div className="singularity-kernel">
-            {/* Global System HUD Overlay */}
-            <div className="crt-overlay"></div>
-
             <Router>
                 <Routes>
                     {/* --- SYSTEM_ROOT --- */}
@@ -112,17 +109,10 @@ function App() {
                 .singularity-kernel {
                     animation: sysEnter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
                     position: relative;
+                    font-family: 'Inter', sans-serif;
+                    background: #fafafa;
                 }
                 
-                .crt-overlay {
-                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                                linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-                    background-size: 100% 3px, 3px 100%;
-                    pointer-events: none; z-index: 9999;
-                    opacity: 0.6;
-                }
-
                 @keyframes sysEnter {
                     from { opacity: 0; filter: blur(20px) contrast(1.5); transform: scale(1.05); }
                     to { opacity: 1; filter: blur(0) contrast(1); transform: scale(1); }
@@ -130,12 +120,43 @@ function App() {
 
                 .orbitron { font-family: 'Orbitron', sans-serif; }
                 
-                /* Global Input Refinement */
+                /* Global Input Refinement with Design System */
                 input, textarea, select {
                     transition: border-color 0.4s, box-shadow 0.4s, transform 0.2s;
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 14px 16px;
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 500;
+                    color: #1a1a2e;
                 }
-                input:focus {
+                input:focus, textarea:focus, select:focus {
+                    border-color: #5B4FFF;
+                    box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1);
                     transform: translateY(-1px);
+                    outline: none;
+                }
+                
+                /* Global Button Styles */
+                button {
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 600;
+                    letter-spacing: 1px;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+                
+                /* Global Typography */
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: 'Inter', sans-serif;
+                    font-weight: 700;
+                    color: #1a1a2e;
+                }
+                
+                p, span, div {
+                    font-family: 'Inter', sans-serif;
                 }
             `}</style>
         </div>

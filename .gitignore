@@ -54,6 +54,6 @@ pip-log.txt
 *.pt
 
 ### Security & Environment Variables (CRITICAL) ###
-.env
-.env.*
+
+
 *.pem
