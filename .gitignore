@@ -3,7 +3,7 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .kotlin
-
+.env
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -30,7 +30,7 @@ bin/
 .DS_Store
 
 # =========================================
-# ➲ SCIO SPECIFIC SYSTEM SHIELDS
+# ➲ EduX SPECIFIC SYSTEM SHIELDS
 # =========================================
 
 ### Node.js (React Frontend & Express Mainframe) ###
