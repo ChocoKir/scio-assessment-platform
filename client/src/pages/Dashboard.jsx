@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Notification from '../components/Notification'; // Notification Integration
+import Notification from '../components/Notification';
 
 const Dashboard = () => {
-    // --- CORE STATE ARCHITECTURE ---
+    // --- CORE STATE ARCHITECTURE (Unchanged) ---
     const [user, setUser] = useState(null);
     const [quizzes, setQuizzes] = useState([]);
     const [mySubmissions, setMySubmissions] = useState([]);
@@ -14,9 +14,9 @@ const Dashboard = () => {
 
     const navigate = useNavigate();
 
-    // --- AUTHENTICATION & DATA FETCHING ---
+    // --- AUTHENTICATION & DATA FETCHING (Unchanged) ---
     useEffect(() => {
-        const storedUser = localStorage.getItem('scio_user');
+        const storedUser = localStorage.getItem('EduX_user');
 
         if (!storedUser) {
             navigate('/login');
@@ -56,9 +56,9 @@ const Dashboard = () => {
         fetchDataStream();
     }, [navigate]);
 
-    // --- SYSTEM HANDLERS ---
+    // --- SYSTEM HANDLERS (Unchanged) ---
     const handleLogout = () => {
-        localStorage.removeItem('scio_user');
+        localStorage.removeItem('EduX_user');
         setNotify({ message: 'Logged out successfully. Goodbye!', type: 'info' });
         setTimeout(() => {
             navigate('/login');
@@ -75,7 +75,6 @@ const Dashboard = () => {
         setExpandedExam(expandedExam === id ? null : id);
     };
 
-    // NEW: DELETE ASSESSMENT
     const handleDeleteQuiz = async (id) => {
         if (!window.confirm("Are you sure you want to delete this assessment? This will remove all associated student data.")) return;
 
@@ -85,7 +84,6 @@ const Dashboard = () => {
             });
 
             if (response.ok) {
-                // Update local state to reflect the removal instantly
                 setQuizzes(quizzes.filter(quiz => quiz._id !== id));
                 setNotify({ message: 'Assessment deleted successfully.', type: 'success' });
             } else {
@@ -96,146 +94,153 @@ const Dashboard = () => {
         }
     };
 
-    // --- STYLING MACROS ---
+    // --- UPDATED STYLING MACRO FOR LIGHT THEME ---
     const sidebarItemStyle = (tabName) => {
         const isActive = activeTab === tabName;
         return {
-            padding: '18px 25px',
+            padding: '14px 20px',
             cursor: 'pointer',
-            backgroundColor: isActive ? 'rgba(91, 79, 255, 0.1)' : 'transparent',
-            color: isActive ? '#5B4FFF' : '#a0a0b0',
-            borderRadius: '15px',
-            marginBottom: '12px',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backgroundColor: isActive ? '#f1f5f9' : 'transparent',
+            color: isActive ? '#5B4FFF' : '#64748b',
+            borderRadius: '8px',
+            marginBottom: '8px',
+            transition: 'all 0.2s ease',
             display: 'flex',
             alignItems: 'center',
-            gap: '15px',
+            gap: '12px',
             fontSize: '14px',
-            fontFamily: 'Orbitron',
-            letterSpacing: '1px',
-            borderLeft: isActive ? '4px solid #5B4FFF' : '4px solid transparent',
-            boxShadow: isActive ? 'inset 0 0 15px rgba(91, 79, 255, 0.05)' : 'none'
+            fontWeight: isActive ? '600' : '500',
+            fontFamily: "'Inter', sans-serif"
         };
     };
 
     if (!user) {
         return (
-            <div className="loading-screen">
-                <div className="pulse">Loading...</div>
+            <div className="EduX-loading">
+                <div className="spinner"></div>
+                <span className="mono">LOADING_WORKSPACE...</span>
             </div>
         );
     }
 
     return (
-        <div className="scio-root-container">
-            {/* SIDEBAR */}
-            <aside className="sidebar-console">
-                <div className="brand-header">
-                    <h1 className="orbitron main-logo">SCIO<span className="accent">AI</span></h1>
-                    <div className="version-tag orbitron">OS_V3_ULTRA</div>
+        <div className="EduX-dashboard-root">
+            {/* CLEAN SAAS SIDEBAR */}
+            <aside className="EduX-sidebar">
+                <div className="sidebar-brand">
+                    <h1 className="brand-title">
+                        <span className="text-dark">EduX</span>
+                        {/* <span className="text-blue italic">AI</span> */}
+                    </h1>
+                    <div className="badge mono">OS_V3_ULTRA</div>
                 </div>
 
-                <nav className="nav-stack">
+                <nav className="sidebar-nav">
                     <div onClick={() => setActiveTab('home')} style={sidebarItemStyle('home')}>
-                        HUB_BASE
+                        <span className="nav-icon">⌂</span> OVERVIEW
                     </div>
 
                     {user.role === 'teacher' ? (
                         <>
                             <div onClick={() => navigate('/create-quiz')} style={{ ...sidebarItemStyle('create'), color: '#10b981' }}>
-                        CREATE_ASSESSMENT
+                                <span className="nav-icon">+</span> NEW ASSESSMENT
                             </div>
                             <div onClick={() => setActiveTab('reports')} style={sidebarItemStyle('reports')}>
-                                RESULTS
+                                 RESULTS DATA
                             </div>
                         </>
                     ) : (
                         <div onClick={() => setActiveTab('reports')} style={sidebarItemStyle('reports')}>
-                            📅 MY_RESULTS
+                            MY RECORDS
                         </div>
                     )}
                 </nav>
 
-                <div className="user-profile-module">
-                    <div className="avatar-orb">{user.name.charAt(0)}</div>
-                    <div className="profile-details">
-                        <div className="profile-name">{user.name.split(' ')[0]}</div>
-                        <div className="profile-status orbitron">ONLINE</div>
+                <div className="sidebar-footer">
+                    <div className="user-profile">
+                        <div className="avatar">{user.name.charAt(0)}</div>
+                        <div className="user-info">
+                            <div className="user-name">{user.name.split(' ')[0]}</div>
+                            <div className="user-role mono">{user.role.toUpperCase()}</div>
+                        </div>
                     </div>
+                    <button onClick={handleLogout} className="btn-logout mono">
+                        TERMINATE_SESSION
+                    </button>
                 </div>
-
-                <button onClick={handleLogout} className="disconnect-trigger orbitron">
-                    🚀 LOGOUT
-                </button>
             </aside>
 
-            {/* 🚀 MAIN VIEWPORT */}
-            <main className="viewport-main">
-                <header className="viewport-top-bar">
-                    <div className="greeting-block">
-                        <h2 className="welcome-text">
-                            Welcome, <span className="user-glow">{user.name}</span>
+            {/* MAIN CONTENT AREA */}
+            <main className="EduX-main-content">
+                <header className="main-header">
+                    <div>
+                        <h2 className="greeting-title">
+                            Welcome back, <span className="text-blue">{user.name}</span>
                         </h2>
-                        <p className="system-subtitle">System status: <span className="status-green">NOMINAL</span> • All nodes operational.</p>
+                        <p className="greeting-sub">Manage your assessments and view analytics.</p>
                     </div>
-                    <div className="hud-indicators">
-                        <div className="hud-pill orbitron">📡 LATENCY: 14ms</div>
-                        <div className="hud-pill orbitron ai-pill">🤖 AI_CORE: ACTIVE</div>
+                    <div className="status-indicators mono">
+                        <div className="status-pill"><span className="dot"></span> SYSTEM: NOMINAL</div>
+                        <div className="status-pill active-ai">AI_CORE: ONLINE</div>
                     </div>
                 </header>
 
-                <div className="content-scroll-pane">
-
+                <div className="content-scroll-area">
                     {/* --- TAB: HOME (Teacher View) --- */}
                     {user.role === 'teacher' && activeTab === 'home' && (
-                        <div className="quiz-data-grid">
-                            {quizzes.map((quiz) => (
-                                <div key={quiz._id} className="assessment-card glass-panel">
-                                    <div className="card-top">
-                                        <span className="orbitron node-id">ID: {quiz._id.slice(-6).toUpperCase()}</span>
-                                        {/* ➲ PURGE TRIGGER */}
-                                        <button className="purge-btn" onClick={() => handleDeleteQuiz(quiz._id)} title="Delete Assessment">
-                                            ✖
-                                        </button>
+                        <div className="grid-layout">
+                            {quizzes.length === 0 ? (
+                                <div className="empty-state">No assessments active. Create one to begin.</div>
+                            ) : (
+                                quizzes.map((quiz) => (
+                                    <div key={quiz._id} className="saas-card">
+                                        <div className="card-header">
+                                            <span className="badge mono">ID: {quiz._id.slice(-6).toUpperCase()}</span>
+                                            <button className="btn-icon-danger" onClick={() => handleDeleteQuiz(quiz._id)} title="Delete">
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <h3 className="card-title">{quiz.title}</h3>
+                                        <p className="card-meta">{quiz.topic} • {quiz.questions.length} Questions</p>
+                                        
+                                        <div className="card-actions">
+                                            <button className="btn-primary" onClick={() => navigate(`/analytics/${quiz._id}`)}>
+                                                VIEW RESULTS
+                                            </button>
+                                            <button className="btn-secondary" onClick={() => copyUplink(quiz._id)} title="Copy Link">
+                                                🔗
+                                            </button>
+                                        </div>
                                     </div>
-                                    <h3 className="orbitron quiz-title">{quiz.title}</h3>
-                                    <p className="quiz-meta">{quiz.topic} • {quiz.questions.length} Questions</p>
-
-                                    <div className="card-footer">
-                                        <button className="primary-action-btn orbitron" onClick={() => navigate(`/analytics/${quiz._id}`)}>
-                                            VIEW_RESULTS
-                                        </button>
-                                        <button className="secondary-icon-btn" onClick={() => copyUplink(quiz._id)}>
-                                            🔗
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     )}
 
                     {/* --- TAB: HOME (Student View) --- */}
                     {user.role === 'student' && activeTab === 'home' && (
-                        <div className="portal-entry-zone">
-                            <div className="portal-module glass-panel">
-                                <div className="laser-scanner-line"></div>
-                                <h2 className="orbitron portal-title">JOIN_ASSESSMENT</h2>
-                                <p className="portal-desc">Enter the session code to join the assessment.</p>
+                        <div className="portal-container">
+                            <div className="saas-card portal-card">
+                               
+                                <h2 className="portal-title">Join Assessment</h2>
+                                <p className="portal-desc">Enter your instructor's session code to begin.</p>
+                                
                                 <input
                                     type="text"
-                                    placeholder="ENTER_SESSION_CODE"
-                                    className="session-input"
+                                    placeholder="e.g. 64a7f9b2"
+                                    className="clean-input mono"
                                     value={joinCode}
                                     onChange={(e) => setJoinCode(e.target.value)}
                                 />
-                                <button className="portal-launch-btn orbitron" onClick={() => {
+                                
+                                <button className="btn-primary w-full" onClick={() => {
                                     if (!joinCode) {
                                         setNotify({ message: 'Session code is required.', type: 'error' });
                                         return;
                                     }
                                     navigate(`/take-quiz/${joinCode.split('/').pop()}`);
                                 }}>
-                                    JOIN_ASSESSMENT
+                                    CONNECT TO SESSION
                                 </button>
                             </div>
                         </div>
@@ -243,41 +248,39 @@ const Dashboard = () => {
 
                     {/* --- TAB: REPORTS / RECORDS --- */}
                     {activeTab === 'reports' && (
-                        <div className="intelligence-logs-view">
-                            <h3 className="orbitron section-label">Results</h3>
+                        <div className="reports-container">
+                            <h3 className="section-title">Assessment Analytics</h3>
+                            
                             {mySubmissions.length === 0 && quizzes.length === 0 ? (
-                                <div className="empty-mainframe-msg orbitron">No results found</div>
+                                <div className="empty-state">No records found in database.</div>
                             ) : (
                                 mySubmissions.map((sub) => (
-                                    <div key={sub._id} className={`intel-entry ${expandedExam === sub._id ? 'expanded' : ''}`}>
-                                        <div className="intel-header" onClick={() => toggleExpansion(sub._id)}>
-                                            <div className="intel-left">
-                                                <div className="rank-orb orbitron" style={{
-                                                    color: sub.percentage >= 70 ? '#10b981' : '#ef4444',
-                                                    borderColor: sub.percentage >= 70 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'
-                                                }}>
+                                    <div key={sub._id} className={`report-accordion ${expandedExam === sub._id ? 'expanded' : ''}`}>
+                                        <div className="report-header" onClick={() => toggleExpansion(sub._id)}>
+                                            <div className="report-info">
+                                                <div className={`score-circle mono ${sub.percentage >= 70 ? 'score-pass' : 'score-fail'}`}>
                                                     {sub.percentage}%
                                                 </div>
-                                                <div className="intel-info">
-                                                    <h4 className="intel-title">{sub.quizId?.title || "Assessment Result"}</h4>
-                                                    <small className="orbitron intel-date">{new Date(sub.createdAt).toLocaleDateString()}</small>
+                                                <div>
+                                                    <h4 className="report-title">{sub.quizId?.title || "Assessment Result"}</h4>
+                                                    <div className="report-date mono">{new Date(sub.createdAt).toLocaleDateString()}</div>
                                                 </div>
                                             </div>
-                                            <div className="intel-right">
-                                                <div className="status-label orbitron">Session Status</div>
-                                                <div className="status-val orbitron" style={{ color: sub.tabSwitches > 0 ? '#ef4444' : '#10b981' }}>
-                                                    {sub.tabSwitches > 0 ? `Tab Switches (${sub.tabSwitches})` : 'No Issues'}
+                                            <div className="report-status">
+                                                <div className={`status-badge mono ${sub.tabSwitches > 0 ? 'badge-warn' : 'badge-good'}`}>
+                                                    {sub.tabSwitches > 0 ? `FLAGS: ${sub.tabSwitches}` : 'CLEAN SESSION'}
                                                 </div>
+                                                <span className="expand-icon">{expandedExam === sub._id ? '▲' : '▼'}</span>
                                             </div>
                                         </div>
 
                                         {expandedExam === sub._id && (
-                                            <div className="intel-body-expansion">
-                                                <div className="ai-feedback-header orbitron">AI Analysis:</div>
+                                            <div className="report-body">
+                                                <h5 className="mono text-blue mb-4">AI_HEURISTIC_ANALYSIS</h5>
                                                 {sub.detailed_results?.map((res, i) => (
-                                                    <div key={i} className="feedback-module">
-                                                        <p className="q-text"><strong>Question {i+1}:</strong> {res.question}</p>
-                                                        <p className="ai-text"><strong>Analysis:</strong> {res.ai_feedback}</p>
+                                                    <div key={i} className="feedback-item">
+                                                        <p className="fb-question"><strong>Q{i+1}:</strong> {res.question}</p>
+                                                        <p className="fb-analysis"><strong>Analysis:</strong> {res.ai_feedback}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -297,122 +300,122 @@ const Dashboard = () => {
             />
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700&display=swap');
+                /* --- EduX DASHBOARD LIGHT SAAS CSS --- */
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
-                .scio-root-container {
+                .EduX-dashboard-root {
                     display: flex; width: 100vw; height: 100vh;
-                    background: #fafafa; color: #1a1a2e; font-family: 'Inter', sans-serif;
-                    overflow: hidden;
+                    background-color: #f8fafc; color: #0f172a;
+                    font-family: 'Inter', sans-serif; overflow: hidden;
                 }
 
-                .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+                .mono { font-family: 'JetBrains Mono', monospace; }
+                .text-blue { color: #5B4FFF; }
+                .text-dark { color: #0f172a; font-weight: 900; }
+                .italic { font-style: italic; font-weight: 900; }
 
-                /* 🌑 Sidebar Console */
-                .sidebar-console {
-                    width: 320px; background: linear-gradient(135deg, #16213e, #1a1a2e);
-                    backdrop-filter: blur(25px); padding: 40px 25px;
-                    border-right: 1px solid rgba(255, 255, 255, 0.08);
-                    display: flex; flex-direction: column; z-index: 50;
-                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+                /* LOADING STATE */
+                .EduX-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: #f8fafc; color: #5B4FFF; }
+                .spinner { width: 40px; height: 40px; border: 3px solid rgba(91, 79, 255, 0.2); border-top-color: #5B4FFF; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+                @keyframes spin { to { transform: rotate(360deg); } }
+
+                /* SIDEBAR */
+                .EduX-sidebar {
+                    width: 280px; background: #ffffff; border-right: 1px solid #e2e8f0;
+                    display: flex; flex-direction: column; padding: 30px 20px; z-index: 10;
                 }
+                .sidebar-brand { margin-bottom: 40px; padding: 0 10px; }
+                .brand-title { font-family: 'Montserrat', sans-serif; font-size: 28px; letter-spacing: -1px; margin: 0 0 5px 0; }
+                .badge { display: inline-block; background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0; }
+                
+                .sidebar-nav { flex: 1; }
+                .nav-icon { width: 24px; display: inline-block; text-align: center; }
 
-                .main-logo { font-size: 32px; letter-spacing: 8px; margin: 0; color: #ffffff; }
-                .main-logo .accent { color: #5B4FFF; }
-                .version-tag { font-size: 9px; color: #a0a0b0; letter-spacing: 4px; margin-top: 5px; text-align: center; text-transform: uppercase; }
-
-                .nav-stack { flex: 1; margin-top: 60px; }
-
-                .user-profile-module {
-                    background: rgba(255, 255, 255, 0.05); padding: 15px;
-                    border-radius: 18px; display: flex; align-items: center;
-                    gap: 15px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.08);
+                .sidebar-footer { border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                .user-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 0 10px; }
+                .avatar { width: 40px; height: 40px; background: #e0e7ff; color: #5B4FFF; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 16px; }
+                .user-name { font-weight: 600; font-size: 14px; color: #0f172a; }
+                .user-role { font-size: 10px; color: #64748b; font-weight: 700; }
+                
+                .btn-logout {
+                    width: 100%; background: transparent; border: 1px solid #fee2e2; color: #ef4444;
+                    padding: 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s;
                 }
+                .btn-logout:hover { background: #fee2e2; }
 
-                .avatar-orb {
-                    width: 45px; height: 45px; background: #5B4FFF; color: #ffffff;
-                    border-radius: 12px; display: flex; justify-content: center;
-                    align-items: center; font-weight: 900; font-size: 20px;
-                }
+                /* MAIN CONTENT */
+                .EduX-main-content { flex: 1; display: flex; flex-direction: column; background-image: radial-gradient(#e2e8f0 1px, transparent 1px); background-size: 32px 32px; }
+                
+                .main-header { display: flex; justify-content: space-between; align-items: flex-end; padding: 40px 60px; background: linear-gradient(to bottom, #f8fafc, transparent); }
+                .greeting-title { font-family: 'Montserrat', sans-serif; font-size: 32px; margin: 0 0 8px 0; letter-spacing: -1px; }
+                .greeting-sub { color: #64748b; margin: 0; font-size: 15px; }
+                
+                .status-indicators { display: flex; gap: 12px; }
+                .status-pill { background: #ffffff; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #64748b; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+                .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; }
+                .active-ai { border-color: #c7d2fe; color: #5B4FFF; background: #e0e7ff; }
 
-                .profile-name { font-weight: 700; font-size: 15px; color: #ffffff; }
-                .profile-status { font-size: 9px; color: #10b981; }
+                .content-scroll-area { flex: 1; overflow-y: auto; padding: 0 60px 60px 60px; }
 
-                .disconnect-trigger {
-                    background: transparent; border: 2px solid #ef4444; color: #ef4444;
-                    padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600;
-                    transition: 0.3s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
-                }
-                .disconnect-trigger:hover { background: #ef4444; color: #ffffff; }
+                /* CARDS & GRIDS */
+                .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+                .saas-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: 0.3s ease; }
+                .saas-card:hover { border-color: #5B4FFF; box-shadow: 0 10px 15px -3px rgba(91, 79, 255, 0.1); transform: translateY(-3px); }
+                
+                .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+                .btn-icon-danger { background: none; border: none; color: #cbd5e1; font-size: 16px; cursor: pointer; transition: 0.2s; }
+                .btn-icon-danger:hover { color: #ef4444; }
+                
+                .card-title { font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: #0f172a; }
+                .card-meta { color: #64748b; font-size: 14px; margin-bottom: 30px; }
+                
+                .card-actions { display: flex; gap: 12px; }
+                .btn-primary { flex: 1; background: #5B4FFF; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; }
+                .btn-primary:hover { background: #4a3ee0; }
+                .btn-secondary { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 0 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 16px; }
+                .btn-secondary:hover { border-color: #5B4FFF; color: #5B4FFF; }
+                .w-full { width: 100%; }
 
-                /* 🚀 Main Viewport */
-                .viewport-main { flex: 1; display: flex; flex-direction: column; padding: 50px 80px; overflow-y: auto; position: relative; }
-                .viewport-top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px; }
-                .welcome-text { font-size: 42px; font-weight: 900; margin: 0; color: #1a1a2e; }
-                .user-glow { color: #5B4FFF; text-shadow: 0 0 20px rgba(91, 79, 255, 0.3); }
-                .system-subtitle { color: #a0a0b0; margin-top: 10px; letter-spacing: 1px; }
-                .status-green { color: #10b981; }
+                /* STUDENT PORTAL */
+                .portal-container { display: flex; justify-content: center; align-items: center; height: 60vh; }
+                .portal-card { max-width: 450px; width: 100%; text-align: center; padding: 50px 40px; }
+                .portal-icon { font-size: 40px; margin-bottom: 20px; }
+                .portal-title { font-size: 24px; font-weight: 700; margin: 0 0 10px 0; }
+                .portal-desc { color: #64748b; margin-bottom: 30px; font-size: 14px; }
+                .clean-input { width: 100%; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 18px; text-align: center; margin-bottom: 24px; color: #0f172a; outline: none; transition: 0.2s; }
+                .clean-input:focus { border-color: #5B4FFF; background: #ffffff; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
 
-                .hud-indicators { display: flex; gap: 15px; }
-                .hud-pill {
-                    padding: 10px 20px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.08);
-                    background: #ffffff; font-size: 10px; color: #6b7280;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                }
-                .ai-pill { border-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+                /* REPORTS / ACCORDION */
+                .reports-container { max-width: 900px; margin: 0 auto; }
+                .section-title { font-family: 'Montserrat', sans-serif; font-size: 24px; margin-bottom: 30px; }
+                
+                .report-accordion { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 16px; overflow: hidden; transition: 0.2s; }
+                .report-accordion:hover { border-color: #cbd5e1; }
+                .report-accordion.expanded { border-color: #5B4FFF; box-shadow: 0 10px 20px -5px rgba(91, 79, 255, 0.1); }
+                
+                .report-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+                .report-info { display: flex; align-items: center; gap: 20px; }
+                
+                .score-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 14px; }
+                .score-pass { background: #d1fae5; color: #047857; }
+                .score-fail { background: #fee2e2; color: #b91c1c; }
+                
+                .report-title { font-size: 16px; font-weight: 600; margin: 0 0 4px 0; color: #0f172a; }
+                .report-date { font-size: 11px; color: #94a3b8; font-weight: 700; }
+                
+                .report-status { display: flex; align-items: center; gap: 20px; }
+                .status-badge { padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+                .badge-good { background: #f1f5f9; color: #64748b; }
+                .badge-warn { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+                .expand-icon { color: #94a3b8; font-size: 12px; }
 
-                /* 📁 Grid Cards */
-                .quiz-data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 30px; }
-                .mission-card { background: #ffffff; padding: 48px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); transition: 0.4s; position: relative; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
-                .mission-card:hover { transform: translateY(-10px); border-color: #5B4FFF; box-shadow: 0 8px 32px rgba(91, 79, 255, 0.25); }
+                .report-body { padding: 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+                .mb-4 { margin-bottom: 20px; display: block; font-size: 12px; font-weight: 700; }
+                .feedback-item { background: #ffffff; padding: 20px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #5B4FFF; }
+                .fb-question { font-size: 14px; color: #0f172a; margin: 0 0 8px 0; }
+                .fb-analysis { font-size: 13px; color: #475569; margin: 0; line-height: 1.5; }
 
-                .card-top { display: flex; justify-content: space-between; align-items: center; }
-                .purge-btn {
-                    background: transparent; border: none; color: #a0a0b0;
-                    font-size: 16px; cursor: pointer; transition: 0.3s;
-                }
-                .purge-btn:hover { color: #ef4444; transform: scale(1.2); text-shadow: 0 0 10px #ef4444; }
-
-                .node-id { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; }
-                .quiz-title { font-size: 24px; color: #1a1a2e; margin: 15px 0 5px 0; font-weight: 800; }
-                .quiz-meta { color: #a0a0b0; font-size: 14px; margin-bottom: 35px; }
-
-                .card-footer { display: flex; gap: 15px; }
-                .primary-action-btn { flex: 1; padding: 15px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
-                .primary-action-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
-                .secondary-icon-btn { padding: 15px; background: transparent; border: 2px solid #5B4FFF; color: #5B4FFF; border-radius: 12px; cursor: pointer; transition: 0.3s; }
-                .secondary-icon-btn:hover { background: #5B4FFF; color: #ffffff; }
-
-                /* 🛰️ Portal UI */
-                .portal-entry-zone { height: 60vh; display: flex; justify-content: center; align-items: center; }
-                .portal-module { width: 100%; max-width: 650px; padding: 80px; text-align: center; position: relative; overflow: hidden; background: #ffffff; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
-                .laser-scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #5B4FFF; box-shadow: 0 0 20px #5B4FFF; animation: scanHUD 4s infinite linear; }
-                .portal-title { font-size: 28px; letter-spacing: 10px; margin-bottom: 20px; color: #1a1a2e; text-transform: uppercase; font-weight: 800; }
-                .portal-desc { color: #a0a0b0; margin-bottom: 50px; line-height: 1.6; }
-                .session-input { width: 100%; padding: 22px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 18px; color: #1a1a2e; font-family: 'Inter'; text-align: center; font-size: 22px; margin-bottom: 40px; outline: none; font-weight: 600; }
-                .session-input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
-                .portal-launch-btn { width: 100%; padding: 22px; background: #1a1a2e; border: none; border-radius: 18px; color: #ffffff; font-weight: 600; font-size: 20px; cursor: pointer; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s ease; }
-                .portal-launch-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
-
-                /* 🏅 Intelligence Logs */
-                .intel-entry { background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; margin-bottom: 20px; overflow: hidden; transition: 0.3s; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-                .intel-header { padding: 30px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-                .intel-left { display: flex; align-items: center; gap: 30px; }
-                .rank-orb { width: 70px; height: 70px; border: 3px solid; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 18px; }
-                .intel-title { font-size: 20px; margin: 0 0 5px 0; color: #1a1a2e; font-weight: 700; }
-                .intel-date { font-size: 9px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; }
-                .intel-right { text-align: right; }
-                .status-label { font-size: 9px; color: #6b7280; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
-                .status-val { font-size: 13px; font-weight: 700; }
-                .intel-body-expansion { padding: 40px; background: #f5f5f5; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-                .ai-feedback-header { color: #5B4FFF; font-size: 11px; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 3px; }
-                .feedback-module { padding: 20px; background: #ffffff; border-radius: 15px; margin-bottom: 15px; border-left: 4px solid #5B4FFF; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-                .q-text { font-size: 14px; margin: 0 0 8px 0; color: #1a1a2e; }
-                .ai-text { font-size: 13px; color: #a0a0b0; font-style: italic; margin: 0; }
-
-                @keyframes scanHUD { 0% { top: 0; } 100% { top: 100%; } }
-                .loading-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #fafafa; color: #5B4FFF; font-family: 'Inter', sans-serif; }
-                .pulse { animation: pulseHUD 2s infinite; }
-                @keyframes pulseHUD { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+                .empty-state { text-align: center; padding: 60px; color: #64748b; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: 12px; }
             `}</style>
         </div>
     );

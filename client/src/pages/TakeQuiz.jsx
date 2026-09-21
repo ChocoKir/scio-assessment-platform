@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
+import './takequiz.css'; // Importing the separated CSS file
 
 const TakeQuiz = () => {
     const { quizId } = useParams();
@@ -40,12 +41,12 @@ const TakeQuiz = () => {
     const canvasRef = useRef(null);
     const wsRef = useRef(null);
     const processedImgRef = useRef(null);
-    const [proctorStatus, setProctorStatus] = useState("orange");
+    const [proctorStatus, setProctorStatus] = useState("#5B4FFF");
     const [proctorMessage, setProctorMessage] = useState("Initializing cameras...");
 
-    // 1. CAMERA SETUP
+    // 1. DATA SETUP
     useEffect(() => {
-        const storedUser = localStorage.getItem('scio_user');
+        const storedUser = localStorage.getItem('EduX_user');
         if (!storedUser) return navigate('/login');
         setUser(JSON.parse(storedUser));
 
@@ -66,24 +67,32 @@ const TakeQuiz = () => {
         return () => clearTimeout(bootTimer);
     }, [quizId, navigate]);
 
-    // 1.5. PRE-FLIGHT CAMERA CHECK (Runs immediately on load)
+    // 1.5. PRE-FLIGHT CAMERA CHECK
     useEffect(() => {
         let activeStream = null;
         const initCamera = async () => {
+            console.log('Initializing camera...');
             try {
-                // Asks for permission on the waiting screen
-                activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                activeStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                console.log('Camera stream obtained:', activeStream);
                 setCameraStream(activeStream);
                 setCameraReady(true);
+                console.log('Camera ready state set to true');
             } catch (err) {
-                setNotify({ message: 'Access denied. Teacher access required.', type: 'error' });
+                console.error('Camera initialization error:', err);
+                setNotify({ message: `Camera access denied: ${err.message}`, type: 'error' });
             }
         };
         initCamera();
 
-        // Cleanup: Turns off the webcam light when they leave the page
         return () => {
             if (activeStream) {
+                console.log('Cleaning up camera stream');
                 activeStream.getTracks().forEach(track => track.stop());
             }
         };
@@ -150,13 +159,17 @@ const TakeQuiz = () => {
         return () => clearInterval(timerId);
     }, [timeLeft, isSubmitted, isGrading, examStarted]);
 
-    // 5. AI VISION ENGINE (Attaches stream & starts WebSocket)
+    // 5. AI VISION ENGINE
     useEffect(() => {
         if (!examStarted || !cameraStream) return;
 
-        // Attach the already-running stream to the video element
         if (videoRef.current) {
+            console.log('Assigning stream to video element:', cameraStream);
             videoRef.current.srcObject = cameraStream;
+            videoRef.current.onloadedmetadata = () => {
+                console.log('Video metadata loaded, playing video');
+                videoRef.current.play().catch(err => console.error('Video play error:', err));
+            };
         }
 
         wsRef.current = new WebSocket("ws://localhost:8000/ws/proctor");
@@ -165,7 +178,7 @@ const TakeQuiz = () => {
             const data = JSON.parse(event.data);
             setProctorMessage(data.message);
 
-            const color = data.status === "green" ? "#00ffa3" : data.status === "red" ? "#ff4d4d" : "#ffc107";
+            const color = data.status === "green" ? "#10b981" : data.status === "red" ? "#ef4444" : "#f59e0b";
             setProctorStatus(color);
 
             if (data.status === "red") triggerRedAlert();
@@ -204,7 +217,6 @@ const TakeQuiz = () => {
         return () => {
             clearInterval(frameInterval);
             if (wsRef.current) wsRef.current.close();
-            // We do NOT stop the camera track here, it is handled by the initial useEffect cleanup
         };
     }, [examStarted, cameraStream]);
 
@@ -227,13 +239,16 @@ const TakeQuiz = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ answers: payload })
             });
+
             const gradeData = await gradeResponse.json();
 
             if (gradeData.status === 'error') throw new Error(gradeData.message);
 
             if (gradeResponse.ok) {
-                setGradeReport(gradeData);
+                const detectedSecurityIssues = tabSwitches + (telemetry.phoneDetected ? 1 : 0) + (telemetry.multipleFacesDetected ? 1 : 0) + (telemetry.faceMissingDetected ? 1 : 0);
+                const integrityStatus = detectedSecurityIssues > 0 ? 'BREACH_DETECTED' : 'VERIFIED';
 
+                setGradeReport(gradeData);
                 await fetch(`http://localhost:5000/api/submissions/quiz/${quizId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -246,7 +261,9 @@ const TakeQuiz = () => {
                         tabSwitches,
                         phoneDetected: telemetry.phoneDetected,
                         multipleFacesDetected: telemetry.multipleFacesDetected,
-                        faceMissingDetected: telemetry.faceMissingDetected
+                        faceMissingDetected: telemetry.faceMissingDetected,
+                        security_violations: detectedSecurityIssues,
+                        integrity_status: integrityStatus
                     })
                 });
 
@@ -264,13 +281,12 @@ const TakeQuiz = () => {
         setAnswers(prev => ({ ...prev, [questionId]: text }));
     };
 
-    // ➲ UPGRADE: Start Exam (Fullscreen now works perfectly)
     const handleStartExam = () => {
         document.documentElement.requestFullscreen().catch(() => {});
         audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
         audioCtxRef.current.resume();
         setExamStarted(true);
-                setNotify({ message: 'Connection established.', type: 'success' });
+        setNotify({ message: 'Connection established.', type: 'success' });
     };
 
     const formatTime = (seconds) => {
@@ -280,203 +296,192 @@ const TakeQuiz = () => {
     };
 
     const getRank = (p) => {
-        if (p >= 90) return { l: 'S', c: '#00d2ff' };
-        if (p >= 75) return { l: 'A', c: '#00ffa3' };
-        if (p >= 60) return { l: 'B', c: '#ffc107' };
-        return { l: 'F', c: '#ff4d4d' };
+        if (p >= 90) return { l: 'S', c: '#5B4FFF' };
+        if (p >= 75) return { l: 'A', c: '#10b981' };
+        if (p >= 60) return { l: 'B', c: '#f59e0b' };
+        return { l: 'F', c: '#ef4444' };
     };
 
-    // --- RENDER LOGIC ---
-
+    // --- VIEW 1: BOOT LOADER ---
     if (!quiz || !user) return (
-        <div className="boot-loader">
-            <div className="pulse orbitron">BOOTING_SCIO_OS_V3</div>
+        <div className="EduX-layout">
+            <div className="loader-container">BOOTING_EduX_OS_V3</div>
         </div>
     );
 
+    // --- VIEW 2: RESULTS ---
     if (isSubmitted && gradeReport) {
         const rank = getRank(gradeReport.percentage);
         return (
-            <div className="results-root">
-                <div className="results-container glass-panel">
-                    <header className="results-header">
-                        <h1 className="orbitron">ASSESSMENT_COMPLETE</h1>
-                        <p className="mono">ID: {quizId.toUpperCase()}</p>
-                    </header>
-                    <div className="results-grid">
-                        <div className="analysis-panel glass-panel">
-                            <div className="panel-label orbitron">AI_ANALYSIS</div>
+            <div className="EduX-layout">
+                <header className="EduX-navbar">
+                    <div className="nav-logo"><span className="logo-icon">s</span> EduX_</div>
+                    <div className="nav-profile">
+                        <div className="profile-text">PROFILE<br/><strong>{user.name || 'ABC'}</strong></div>
+                        <button className="nav-btn" onClick={() => navigate('/dashboard')}>EXIT</button>
+                    </div>
+                </header>
+                <main className="EduX-content">
+                    <div className="section-tag">SECTION: RESULTS</div>
+                    <div className="hero-text">
+                        <h1>Assessment<span>Complete.</span></h1>
+                        <p>ID: {quizId.toUpperCase()}</p>
+                    </div>
+                    
+                    <div className="stats-grid results-grid">
+                        <div className="stat-card">
+                            <small>PERFORMANCE_RANK</small>
+                            <div className="rank-display" style={{ color: rank.c }}>{rank.l}</div>
+                            <div className="stat-value">{gradeReport.percentage}%</div>
+                            <span className="stat-label">{gradeReport.final_score} / {gradeReport.total_possible} PTS</span>
+                        </div>
+                        <div className="stat-card ai-feedback-card">
+                            <small>AI_ANALYSIS</small>
                             <div className="feedback-list">
                                 {gradeReport.detailed_results.map((res, i) => (
-                                    <div key={i} className="feedback-item" style={{ borderLeftColor: res.awarded_marks > 0 ? '#00ffa3' : '#ff4d4d' }}>
-                                        <p className="q-text mono"><strong>Question {i+1}:</strong> {res.question}</p>
-                                        <p className="ai-note italic">"{res.ai_feedback}"</p>
+                                    <div key={i} className="feedback-item" style={{ borderLeftColor: res.awarded_marks > 0 ? '#10b981' : '#ef4444' }}>
+                                        <p className="feedback-q">Q{i+1}: {res.question}</p>
+                                        <p className="feedback-a">{res.ai_feedback}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="rank-panel glass-panel">
-                            <div className="panel-label orbitron">PERFORMANCE_RANK</div>
-                            <div className="rank-letter" style={{ color: rank.c }}>{rank.l}</div>
-                            <div className="percentage-text orbitron">{gradeReport.percentage}%</div>
-                            <div className="raw-score mono">{gradeReport.final_score} / {gradeReport.total_possible} PTS</div>
-                            <button onClick={() => navigate('/dashboard')} className="return-btn orbitron">RETURN_TO_DASHBOARD</button>
-                        </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
 
+    // --- VIEW 3: WAITING ROOM ---
     if (!examStarted) {
         return (
-            <div className="waiting-root">
-                <div className="waiting-content">
-                    <h1 className="orbitron waiting-title">{quiz.title}</h1>
-                    <div className="system-checks">
-                        {/* ➲ UPGRADE: Dynamic Sensor Checking */}
-                        <div className="check-box glass-panel">
-                            <small className="orbitron">CAMERA</small>
-                            <div className="status-text" style={{ color: cameraReady ? '#10b981' : '#f59e0b' }}>
-                                {cameraReady ? 'Ready' : 'Waiting for permission...'}
-                            </div>
-                        </div>
-                        <div className="check-box glass-panel">
-                            <small className="orbitron">SYSTEM</small>
-                            <div className="status-text" style={{ color: '#10b981' }}>Online</div>
-                        </div>
-                        <div className="check-box glass-panel">
-                            <small className="orbitron">AI</small>
-                            <div className="status-text" style={{ color: systemReady ? '#10b981' : '#6b7280' }}>
-                                {systemReady ? 'Ready' : 'Loading...'}
-                            </div>
-                        </div>
+            <div className="EduX-layout">
+                <header className="EduX-navbar">
+                    <div className="nav-logo"><span className="logo-icon">s</span> EduX_</div>
+                    <div className="nav-links">
+                        <span className="active">DASHBOARD</span>
+                        <span>HOST_SESSION</span>
+                        <span>JOIN_SESSION</span>
+                    </div>
+                    <div className="nav-profile">
+                        <div className="profile-text">PROFILE<br/><strong>{user.name || 'ABC'}</strong></div>
+                        <button className="nav-btn" onClick={() => navigate('/dashboard')}>LOGOUT</button>
+                    </div>
+                </header>
+
+                <main className="EduX-content">
+                    <div className="section-tag">SECTION: INITIALIZATION</div>
+                    <div className="hero-text">
+                        <h1>System<span>Check.</span></h1>
+                        <p>Verify your hardware integrity before proceeding to the secure session for: <strong>{quiz.title}</strong></p>
                     </div>
 
-                    {/* ➲ UPGRADE: Button waits for camera to be allowed */}
-                    <button onClick={handleStartExam} disabled={!systemReady || !cameraReady} className={`init-btn orbitron ${(systemReady && cameraReady) ? 'ready' : ''}`}>
-                        {(systemReady && cameraReady) ? 'Start Assessment' : 'Preparing hardware...'}
-                    </button>
-                </div>
+                    <div className="stats-grid init-grid">
+                        <div className="stat-card">
+                            <small>CAMERA_HARDWARE</small>
+                            <div className="stat-value" style={{ color: cameraReady ? '#1a1a2e' : '#9ca3af' }}>
+                                {cameraReady ? 'DETECTED' : 'WAITING'}
+                            </div>
+                            <span className="stat-label text-indigo">status</span>
+                        </div>
+                        <div className="stat-card">
+                            <small>AI_ENGINE</small>
+                            <div className="stat-value" style={{ color: systemReady ? '#1a1a2e' : '#9ca3af' }}>
+                                {systemReady ? 'ONLINE' : 'BOOTING'}
+                            </div>
+                            <span className="stat-label text-indigo">secure</span>
+                        </div>
+                        <div className="stat-card action-card">
+                            <button 
+                                onClick={handleStartExam} 
+                                disabled={!systemReady || !cameraReady} 
+                                className={`submit-btn ${(!systemReady || !cameraReady) ? 'loading' : ''}`}
+                            >
+                                {(systemReady && cameraReady) ? 'START SECURE ASSESSMENT' : 'INITIALIZING...'}
+                            </button>
+                        </div>
+                    </div>
+                </main>
                 <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
             </div>
         );
     }
 
+    // --- VIEW 4: EXAM INTERFACE ---
     return (
-        <div className={`exam-hud-root ${isRedAlert ? 'red-alert-active' : ''}`}>
-            <header className="hud-header">
-                <div className="orbitron session-id">SESSION_#{quizId.slice(-4)}</div>
-                <div className="timer-module">
-                    <div className="time-display orbitron" style={{ color: timeLeft < 60 ? '#ff4d4d' : '#00d2ff' }}>{formatTime(timeLeft)}</div>
-                    <div className="progress-track"><div className="progress-fill" style={{ width: `${(Object.keys(answers).length / quiz.questions.length) * 100}%` }}></div></div>
+        <div className={`EduX-layout ${isRedAlert ? 'red-alert' : ''}`}>
+            <header className="EduX-navbar exam-navbar">
+                <div className="nav-logo"><span className="logo-icon">s</span> EduX_</div>
+                <div className="nav-timer">
+                    <span className="time-text" style={{ color: timeLeft < 60 ? '#ef4444' : '#1a1a2e' }}>{formatTime(timeLeft)}</span>
+                    <small>TIME_REMAINING</small>
                 </div>
-                <div className="strike-module">
-                    <small className="orbitron">VIOLATIONS</small>
-                    <div className="status-text" style={{ color: violations > 0 ? '#ef4444' : '#10b981' }}>{violations}</div>
+                <div className="nav-actions">
+                    <button className="submit-btn compact-btn" onClick={processSubmission} disabled={isGrading}>
+                        {isGrading ? 'PROCESSING...' : 'SUBMIT EXAM'}
+                    </button>
                 </div>
             </header>
 
-            <div className="proctor-hud" style={{ borderColor: proctorStatus, boxShadow: isRedAlert ? '0 0 50px #ff4d4d' : 'none' }}>
-                <div className="laser-line" style={{ background: proctorStatus }}></div>
-                <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
-                <video ref={videoRef} autoPlay muted style={{ position: 'absolute', opacity: 0 }}></video>
-                <img ref={processedImgRef} alt="AI VISION" className="ai-view-img" />
-                <div className="proctor-msg orbitron" style={{ background: proctorStatus }}>{proctorMessage}</div>
-            </div>
-
-            <main className="question-stream">
-                <form onSubmit={(e) => { e.preventDefault(); processSubmission(); }}>
-                    {quiz.questions.map((q, i) => (
-                        <div key={q._id} className="question-node">
-                            <div className="node-number orbitron">0{i+1}</div>
-                            <div className="node-content glass-panel">
-                                <p className="q-prompt">{q.question}</p>
-                                <div className="answer-zone">
+            <main className="EduX-content split-layout">
+                {/* Left Side: Questions */}
+                <div className="assessment-pane">
+                    <div className="section-tag" style={{ marginBottom: '30px' }}>SECTION: ASSESSMENT</div>
+                    <form onSubmit={(e) => { e.preventDefault(); processSubmission(); }}>
+                        {quiz.questions.map((q, i) => (
+                            <div key={q._id} className="question-block">
+                                <div className="q-meta"><span className="text-indigo">Q{String(i+1).padStart(3, '0')}</span> / {q.marks} PTS</div>
+                                <h3 className="q-text">{q.question}</h3>
+                                
+                                <div className="answer-area">
                                     {q.type === 'mcq' ? (
-                                        <div className="mcq-options-container">
+                                        <div className="mcq-grid">
                                             {q.options?.map((opt, oIndex) => (
-                                                <label key={oIndex} className={`mcq-label mono ${answers[q._id] === opt ? 'selected' : ''}`}>
-                                                    <input type="radio" name={`question-${q._id}`} value={opt} checked={answers[q._id] === opt} onChange={() => handleAnswerChange(q._id, opt)} required />
-                                                    <span className="mcq-text">{opt}</span>
+                                                <label key={oIndex} className={`mcq-card ${answers[q._id] === opt ? 'selected' : ''}`}>
+                                                    <input type="radio" name={`q-${q._id}`} value={opt} checked={answers[q._id] === opt} onChange={() => handleAnswerChange(q._id, opt)} required />
+                                                    <span>{opt}</span>
                                                 </label>
                                             ))}
                                         </div>
                                     ) : (
-                                        <textarea rows="4" className="text-answer-input mono" placeholder="Type your answer..." value={answers[q._id] || ''} onChange={(e) => handleAnswerChange(q._id, e.target.value)} required />
+                                        <textarea className="text-area" placeholder="Enter your response..." value={answers[q._id] || ''} onChange={(e) => handleAnswerChange(q._id, e.target.value)} required />
                                     )}
                                 </div>
                             </div>
+                        ))}
+                    </form>
+                </div>
+
+                {/* Right Side: Dashboard Widget Proctor Style */}
+                <aside className="proctor-pane">
+                    <div className="stat-card video-card" style={{ borderColor: proctorStatus }}>
+                        <div className="card-header">
+                            <small>PROCTOR_FEED</small>
+                            <span className="status-dot" style={{ background: proctorStatus }}></span>
                         </div>
-                    ))}
-                    <div className="submit-container">
-                        <button type="submit" disabled={isGrading} className={`finalize-btn orbitron ${isGrading ? 'loading' : ''}`}>
-                            {isGrading ? 'Processing...' : 'Submit Assessment'}
-                        </button>
+                        <div className="video-container">
+                            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+                            <video ref={videoRef} autoPlay muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>
+                            <img ref={processedImgRef} alt="AI Feed" className="ai-feed-stream" style={{ display: 'none' }} />
+                            <div className="scan-line" style={{ background: proctorStatus }}></div>
+                        </div>
+                        <div className="proctor-message">{proctorMessage}</div>
                     </div>
-                </form>
+
+                    <div className="stat-card telemetry-card">
+                        <small>SESSION_TELEMETRY</small>
+                        <div className="telemetry-row">
+                            <span>VIOLATIONS</span>
+                            <strong style={{ color: violations > 0 ? '#ef4444' : '#10b981' }}>{violations} flags</strong>
+                        </div>
+                        <div className="telemetry-row">
+                            <span>PROGRESS</span>
+                            <strong>{Object.keys(answers).length} / {quiz.questions.length} ans</strong>
+                        </div>
+                    </div>
+                </aside>
             </main>
             <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
-            <style>
-                {`
-                .exam-hud-root, .waiting-root, .results-root { min-height: 100vh; background: #fafafa; color: #1a1a2e; font-family: 'Inter', sans-serif; transition: background-color 0.15s ease-in-out; }
-                
-                .red-alert-active { background: #fef2f2 !important; }
-
-                .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
-                .mono { font-family: 'JetBrains Mono', monospace; }
-                .italic { font-style: italic; }
-
-                .hud-header { position: sticky; top: 0; z-index: 100; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid #e5e7eb; padding: 20px 60px; display: flex; justify-content: space-between; align-items: center; }
-                .time-display { font-size: 32px; font-weight: 900; color: #1a1a2e; }
-                .progress-track { height: 3px; width: 200px; background: #e5e7eb; margin-top: 5px; border-radius: 50px; overflow: hidden; }
-                .progress-fill { height: 100%; background: #5B4FFF; transition: 0.5s; box-shadow: 0 0 10px #5B4FFF; }
-                
-                .proctor-hud { position: fixed; bottom: 40px; right: 40px; width: 300px; border-radius: 25px; border: 2px solid #5B4FFF; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); z-index: 1000; transition: 0.3s; background: #ffffff; }
-                .ai-view-img { width: 100%; display: block; filter: grayscale(0.2) contrast(1.2); }
-                .proctor-msg { color: #1a1a2e; padding: 12px; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }
-                .laser-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; box-shadow: 0 0 15px currentColor; animation: scanHUD 3s linear infinite; z-index: 2; }
-
-                .question-stream { max-width: 1000px; margin: 0 auto; padding: 60px 40px; }
-                .question-node { display: grid; grid-template-columns: 80px 1fr; gap: 20px; margin-bottom: 50px; }
-                .node-number { font-size: 24px; color: #6b7280; text-align: right; margin-top: 20px; }
-                .node-content { padding: 40px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; background: #ffffff; }
-                .q-prompt { font-size: 18px; margin-bottom: 30px; line-height: 1.6; color: #1a1a2e; }
-                
-                .text-answer-input { width: 100%; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; color: #1a1a2e; outline: none; transition: 0.3s; font-size: 14px; }
-                .text-answer-input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
-
-                .mcq-options-container { display: flex; flex-direction: column; gap: 15px; }
-                .mcq-label { display: flex; align-items: center; gap: 15px; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: 0.3s; }
-                .mcq-label.selected { border-color: #5B4FFF; background: rgba(91, 79, 255, 0.05); color: #1a1a2e; }
-                .mcq-label input { display: none; }
-
-                .finalize-btn { width: 100%; padding: 25px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 15px; font-weight: 600; font-size: 18px; cursor: pointer; transition: 0.3s; }
-                .finalize-btn:hover { background: #5B4FFF; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
-                .finalize-btn.loading { background: #f5f5f5; color: #5B4FFF; cursor: not-allowed; }
-
-                .waiting-content { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; position: relative; }
-                .waiting-title { font-size: 48px; color: #1a1a2e; margin-bottom: 40px; text-shadow: 0 0 20px rgba(91, 79, 255, 0.3); }
-                
-                .system-checks { display: flex; gap: 20px; margin-bottom: 40px; }
-                .check-box { padding: 20px 30px; border-radius: 15px; text-align: center; border: 1px solid rgba(91, 79, 255, 0.2); background: #ffffff; }
-                .check-box small { color: #6b7280; letter-spacing: 2px; }
-                .status-text { font-weight: 900; font-size: 18px; margin-top: 10px; color: #1a1a2e; }
-
-                .init-btn { padding: 20px 50px; background: #f5f5f5; color: #1a1a2e; border: none; border-radius: 15px; font-size: 16px; transition: 0.3s; letter-spacing: 2px; font-weight: 900; }
-                .init-btn.ready { background: #5B4FFF; color: #ffffff; cursor: pointer; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
-                .init-btn.ready:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
-
-                .results-root { display: flex; justify-content: center; align-items: center; padding: 40px; background: #fafafa; }
-                .results-container { width: 100%; max-width: 1100px; padding: 60px; background: #ffffff; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
-                .rank-letter { font-size: 160px; font-weight: 900; line-height: 1; margin: 20px 0; text-shadow: 0 0 40px currentColor; color: #1a1a2e; }
-                .return-btn { width: 100%; padding: 20px; background: #1a1a2e; color: #ffffff; border: none; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-top: 40px; font-weight: bold; }
-                .return-btn:hover { background: #5B4FFF; color: #ffffff; }
-
-                @keyframes scanHUD { 0% { top: 0%; } 100% { top: 100%; } }
-                .boot-loader { height: 100vh; display: flex; justify-content: center; align-items: center; background: #fafafa; color: #5B4FFF; font-size: 20px; }
-                `}
-            </style>
         </div>
     );
 };

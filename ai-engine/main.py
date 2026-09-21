@@ -32,7 +32,7 @@ model = genai.GenerativeModel(
     generation_config={"response_mime_type": "application/json"}
 )
 
-app = FastAPI(title="SCIO_NEURAL_CORE_V3_FINAL")
+app = FastAPI(title="EduX_NEURAL_CORE_V3_FINAL")
 
 app.add_middleware(
     CORSMiddleware,

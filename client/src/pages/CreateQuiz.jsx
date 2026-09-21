@@ -4,32 +4,34 @@ import { useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
 
 const CreateQuiz = () => {
+    // --- CORE STATE ARCHITECTURE (Unchanged) ---
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [notify, setNotify] = useState({ message: '', type: '' });
 
-    // --- ASSESSMENT PARAMETERS ---
+    // --- ASSESSMENT PARAMETERS (Unchanged) ---
     const [title, setTitle] = useState('');
     const [topic, setTopic] = useState('');
     const [timeLimit, setTimeLimit] = useState(15);
     const [aiCount, setAiCount] = useState(3);
 
-    // --- DYNAMIC QUESTION ARRAY ---
+    // --- DYNAMIC QUESTION ARRAY (Unchanged) ---
     const [questions, setQuestions] = useState([
         { type: 'text', question: '', expected_answer: '', options: ['', ''], marks: 10 }
     ]);
 
+    // --- AUTH & VALIDATION (Unchanged) ---
     useEffect(() => {
-        const storedUser = localStorage.getItem('scio_user');
+        const storedUser = localStorage.getItem('EduX_user');
         if (!storedUser) return navigate('/login');
         const parsedUser = JSON.parse(storedUser);
         if (parsedUser.role !== 'teacher') navigate('/dashboard');
         else setUser(parsedUser);
     }, [navigate]);
 
-    // --- AI SYNTHESIS SIMULATOR ---
+    // --- AI SYNTHESIS SIMULATOR (Unchanged) ---
     const handleAIGenerate = () => {
         if (!topic) {
             return setNotify({ message: 'Topic is required. Please define a classification topic first.', type: 'error' });
@@ -67,7 +69,7 @@ const CreateQuiz = () => {
         }, 2500);
     };
 
-    // --- DYNAMIC FORM HANDLERS ---
+    // --- DYNAMIC FORM HANDLERS (Unchanged) ---
     const handleAddQuestion = () => {
         setQuestions([...questions, { type: 'text', question: '', expected_answer: '', options: ['', ''], marks: 10 }]);
     };
@@ -88,7 +90,7 @@ const CreateQuiz = () => {
         setQuestions(updated);
     };
 
-    // --- UPLINK HANDLER ---
+    // --- UPLINK HANDLER (Unchanged) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setNotify({ message: '', type: '' });
@@ -116,121 +118,135 @@ const CreateQuiz = () => {
         }
     };
 
-    if (!user) return <div className="loading-screen">Loading...</div>;
+    if (!user) return (
+        <div className="EduX-loading">
+            <div className="spinner"></div>
+            <span>Establishing Auth Uplink...</span>
+        </div>
+    );
 
     return (
-        <div className="create-quiz-root">
-            <div className="create-quiz-container glass-panel">
-                <header className="forge-header">
-                    <button className="back-btn orbitron" type="button" onClick={() => navigate('/dashboard')}>◀ Cancel</button>
+        <div className="EduX-forge-root">
+            {/* Structuring as a clean SaaS Card within the main view */}
+            <main className="EduX-main-viewport">
+                <header className="main-header">
                     <div>
-                        <h1 className="orbitron create-quiz-title">Create Assessment</h1>
-                        <p className="create-quiz-subtitle orbitron">Assessment Parameters</p>
+                        <h2 className="header-title">Create <span className="text-blue">Assessment</span></h2>
+                        <p className="header-sub">Configure the parameters for your proctored evaluation.</p>
                     </div>
+                    <button className="btn-abort mono" type="button" onClick={() => navigate('/dashboard')}>
+                        ← ABORT_FORGE
+                    </button>
                 </header>
 
-                <form onSubmit={handleSubmit} className="create-quiz-form">
+                <form onSubmit={handleSubmit} className="forge-form-pane">
+                    
+                    {/* CORE ASSSESSMENT GLOBAL SETUP */}
+                    <div className="saas-card setup-card">
+                        <div className="card-badge mono">PARAMETERS</div>
+                        
+                        <div className="param-layout">
+                            <div className="form-group flex-2">
+                                <label>Assessment Title</label>
+                                <input type="text" className="clean-input" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Distributed Systems Midterm" />
+                            </div>
 
-                    {/* --- CORE PARAMETERS --- */}
-                    <div className="parameter-grid">
-                        <div className="input-field">
-                            <label className="orbitron">Assessment Title</label>
-                            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. OS Midterm" />
-                        </div>
-
-                        <div className="input-field ai-topic-zone">
-                            <label className="orbitron">Topic & AI Question Count</label>
-                            <div style={{display: 'flex', gap: '10px'}}>
-                                <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} required placeholder="e.g. CPU Scheduling" style={{flex: 2}}/>
-                                <input type="number" value={aiCount} onChange={(e) => setAiCount(Number(e.target.value))} min="1" max="20" style={{flex: 0.8, textAlign: 'center'}} title="Number of AI Questions" />
-                                <button type="button" className={`ai-btn orbitron ${isGeneratingAI ? 'pulse-ai' : ''}`} onClick={handleAIGenerate} disabled={isGeneratingAI}>
-                                    {isGeneratingAI ? 'Syncing...' : '🤖 Generate Questions'}
-                                </button>
+                            <div className="form-group flex-1">
+                                <label>Time Limit (Min)</label>
+                                <input type="number" className="clean-input" value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} required min="1" />
                             </div>
                         </div>
 
-                        <div className="input-field time-zone">
-                            <label className="orbitron">Time Limit (Minutes)</label>
-                            <input type="number" value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} required min="1" />
+                        <div className="form-group ai-zone">
+                            <label>Context Topic & AI Synthesis Heuristics</label>
+                            <div className="ai-row">
+                                <input type="text" className="clean-input ai-topic-input" value={topic} onChange={(e) => setTopic(e.target.value)} required placeholder="e.g. Heuristic Heuristic Analysis" />
+                                <input type="number" className="clean-input ai-count-input mono" value={aiCount} onChange={(e) => setAiCount(Number(e.target.value))} min="1" max="20" title="Quantity to synthesize" />
+                                <button type="button" className={`btn-ai ${isGeneratingAI ? 'generating' : ''}`} onClick={handleAIGenerate} disabled={isGeneratingAI}>
+                                    <span className="icon">🤖</span>
+                                    <span className="text mono">{isGeneratingAI ? 'SYNTHESIZING...' : 'AI_AUTO_GEN'}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="divider"></div>
-
-                    {/* --- DYNAMIC QUESTION UNITS --- */}
+                    {/* DYNAMIC QUESTIONS LISTING */}
                     <div className="questions-section">
-                        <h3 className="orbitron section-title">Questions</h3>
+                        <div className="section-header">
+                            <h3 className="section-title">Data Nodes (Questions)</h3>
+                        </div>
 
                         {questions.map((q, index) => (
-                            <div key={index} className="question-module">
-                                <div className="q-header orbitron">
-                                    <span>Question {index + 1}</span>
-                                    <div className="q-actions">
+                            <div key={index} className="question-node saas-card">
+                                <header className="node-header">
+                                    <div className="node-id mono">NODE_0{index + 1}</div>
+                                    <div className="node-actions">
                                         <select
-                                            className="type-selector orbitron"
+                                            className="type-select clean-select mono"
                                             value={q.type}
                                             onChange={(e) => handleQuestionChange(index, 'type', e.target.value)}
                                         >
-                                            <option value="text">Text Answer</option>
-                                            <option value="mcq">Multiple Choice</option>
+                                            <option value="text">TEXT_ANALYSIS</option>
+                                            <option value="mcq">MULTIPLE_CHOICE</option>
                                         </select>
                                         {questions.length > 1 && (
-                                            <button type="button" className="remove-btn" onClick={() => handleRemoveQuestion(index)}>✖ Remove</button>
+                                            <button type="button" className="btn-remove-node mono" onClick={() => handleRemoveQuestion(index)}>✖ PURGE</button>
                                         )}
                                     </div>
-                                </div>
+                                </header>
 
-                                <div className="q-body">
-                                    <div className="input-field full-width">
-                                        <label className="orbitron">Question Text</label>
+                                <div className="node-body">
+                                    <div className="form-group full-width">
+                                        <label>Query Input (Question Text)</label>
                                         <textarea
+                                            className="clean-input q-textarea"
                                             value={q.question} onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
-                                            required placeholder="Enter assessment question..." rows="2"
+                                            required placeholder="Enter assessment question prompt..." rows="2"
                                         />
                                     </div>
 
-                                    {/* CONDITIONAL RENDERING: MCQ vs TEXT */}
+                                    {/* MCQ PARAMETERS VS TEXT PARMAMETERS */}
                                     {q.type === 'mcq' ? (
-                                        <div className="mcq-zone">
-                                            <div className="options-grid">
-                                                <div className="input-field">
-                                                    <label className="orbitron">Option A</label>
-                                                    <input type="text" value={q.options[0]} onChange={(e) => handleOptionChange(index, 0, e.target.value)} required placeholder="True / Concept A" />
+                                        <div className="mcq-pane">
+                                            <div className="variant-grid">
+                                                <div className="form-group">
+                                                    <label>Variant Alpha (A)</label>
+                                                    <input type="text" className="clean-input" value={q.options[0]} onChange={(e) => handleOptionChange(index, 0, e.target.value)} required placeholder="Concept A" />
                                                 </div>
-                                                <div className="input-field">
-                                                    <label className="orbitron">Option B</label>
-                                                    <input type="text" value={q.options[1]} onChange={(e) => handleOptionChange(index, 1, e.target.value)} required placeholder="False / Concept B" />
+                                                <div className="form-group">
+                                                    <label>Variant Beta (B)</label>
+                                                    <input type="text" className="clean-input" value={q.options[1]} onChange={(e) => handleOptionChange(index, 1, e.target.value)} required placeholder="Concept B" />
                                                 </div>
                                             </div>
                                             <div className="q-row">
-                                                <div className="input-field flex-2">
-                                                    <label className="orbitron">Correct Answer</label>
+                                                <div className="form-group flex-2">
+                                                    <label>Validated Vector (Correct Answer)</label>
                                                     <select
-                                                        className="mcq-correct-selector"
+                                                        className="clean-select correct-select mono"
                                                         value={q.expected_answer}
                                                         onChange={(e) => handleQuestionChange(index, 'expected_answer', e.target.value)}
                                                         required
                                                     >
-                                                        <option value="" disabled>Select correct option...</option>
+                                                        <option value="" disabled>Select valid target...</option>
                                                         {q.options[0] && <option value={q.options[0]}>{q.options[0]}</option>}
                                                         {q.options[1] && <option value={q.options[1]}>{q.options[1]}</option>}
                                                     </select>
                                                 </div>
-                                                <div className="input-field flex-1">
-                                                    <label className="orbitron">POINTS</label>
-                                                    <input type="number" value={q.marks} onChange={(e) => handleQuestionChange(index, 'marks', e.target.value)} required min="1" />
+                                                <div className="form-group flex-1">
+                                                    <label>Weight (Pts)</label>
+                                                    <input type="number" className="clean-input mono" value={q.marks} onChange={(e) => handleQuestionChange(index, 'marks', e.target.value)} required min="1" />
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="q-row">
-                                            <div className="input-field flex-2">
-                                                <label className="orbitron">Answer Key</label>
-                                                <input type="text" value={q.expected_answer} onChange={(e) => handleQuestionChange(index, 'expected_answer', e.target.value)} required placeholder="Keywords the AI should look for..." />
+                                            <div className="form-group flex-2">
+                                                <label>Validation Heuristics (Answer Key)</label>
+                                                <input type="text" className="clean-input" value={q.expected_answer} onChange={(e) => handleQuestionChange(index, 'expected_answer', e.target.value)} required placeholder="Keywords the AI grader should lookup..." />
                                             </div>
-                                            <div className="input-field flex-1">
-                                                <label className="orbitron">Points</label>
-                                                <input type="number" value={q.marks} onChange={(e) => handleQuestionChange(index, 'marks', e.target.value)} required min="1" />
+                                            <div className="form-group flex-1">
+                                                <label>Weight (Pts)</label>
+                                                <input type="number" className="clean-input mono" value={q.marks} onChange={(e) => handleQuestionChange(index, 'marks', e.target.value)} required min="1" />
                                             </div>
                                         </div>
                                     )}
@@ -238,68 +254,143 @@ const CreateQuiz = () => {
                             </div>
                         ))}
 
-                        <button type="button" className="add-q-btn orbitron" onClick={handleAddQuestion}>+ Add Question</button>
+                        <button type="button" className="btn-add-node mono" onClick={handleAddQuestion}>+ INITIALIZE_NEW_NODE</button>
                     </div>
 
-                    <button type="submit" disabled={isLoading} className={`submit-forge-btn orbitron ${isLoading ? 'loading' : ''}`}>
-                        {isLoading ? 'Creating...' : 'Create Assessment'}
+                    <button type="submit" disabled={isLoading} className={`btn-deploy mono ${isLoading ? 'loading' : ''}`}>
+                        {isLoading ? 'ESTABLISHING_UPLINK...' : 'DEPLOY_ASSESSMENT'}
                     </button>
                 </form>
-            </div>
+            </main>
 
             <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
 
             <style>{`
-                .create-quiz-root { min-height: 100vh; padding: 40px 20px; background: #ffffff; color: #000000; font-family: 'Inter', sans-serif; display: flex; justify-content: center; }
-                .orbitron { font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+                /* --- EduX V3 LIGHT THEME CSS FORGE --- */
+                @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,800;0,900;1,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
-                .create-quiz-container { width: 95vw; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 24px; padding: 60px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08); z-index: 10; height: fit-content; }
+                .EduX-forge-root {
+                    min-height: 100vh; width: 100vw;
+                    background-color: #f8fafc; color: #0f172a;
+                    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+                    background-size: 32px 32px;
+                    font-family: 'Inter', sans-serif;
+                    display: flex; flex-direction: column;
+                    overflow-x: hidden;
+                }
 
-                .forge-header { display: flex; align-items: center; gap: 30px; margin-bottom: 40px; border-bottom: 1px solid #e5e7eb; padding-bottom: 20px; }
-                .back-btn { background: transparent; border: 1px solid #6b7280; color: #6b7280; padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-                .back-btn:hover { border-color: #5B4FFF; color: #5B4FFF; }
-                .create-quiz-title { color: #000000; margin: 0; font-size: 28px; }
-                .create-quiz-subtitle { color: #6b7280; font-size: 10px; margin: 5px 0 0 0; letter-spacing: 4px; }
+                .mono { font-family: 'JetBrains Mono', monospace; }
+                .text-blue { color: #5B4FFF; }
 
-                .parameter-grid { display: grid; grid-template-columns: 1fr 2.5fr 0.8fr; gap: 25px; }
+                /* LOADING SCREEN */
+                .EduX-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: #f8fafc; color: #5B4FFF; }
+                .spinner { width: 30px; height: 30px; border: 3px solid rgba(91, 79, 255, 0.2); border-top-color: #5B4FFF; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+                @keyframes spin { to { transform: rotate(360deg); } }
+
+                /* VIEWPORT AREA */
+                .EduX-main-viewport { flex: 1; display: flex; flex-direction: column; padding: 40px 60px; max-width: 1400px; margin: 0 auto; width: 100%;}
                 
-                .input-field { display: flex; flex-direction: column; text-align: left; margin-bottom: 15px; }
-                .input-field label { font-size: 14px; color: #1a1a2e; margin-bottom: 8px; letter-spacing: 0.5px; font-weight: 500; text-transform: none; }
+                /* HEADER */
+                .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+                .header-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 36px; margin: 0; letter-spacing: -1.5px; }
+                .header-sub { color: #64748b; margin: 8px 0 0 0; font-size: 16px; }
                 
-                input, textarea, select { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; color: #1a1a2e; padding: 18px 24px; font-family: 'Inter'; font-size: 16px; font-weight: 400; outline: none; transition: 0.3s; resize: vertical; min-height: 56px; width: 100%; }
-                input:focus, textarea:focus, select:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
-                textarea { min-height: 140px; line-height: 1.6; width: 100%; }
+                .btn-abort {
+                    background: transparent; color: #f87171; border: 2px solid transparent; padding: 12px 20px;
+                    border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s;
+                    font-size: 11px; letter-spacing: 1px;
+                }
+                .btn-abort:hover { border-color: #fecaca; background: #fef2f2; }
 
-                .ai-btn { background: rgba(91, 79, 255, 0.1); border: 1px solid #5B4FFF; color: #5B4FFF; padding: 0 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; font-size: 11px; font-weight: bold; white-space: nowrap; }
-                .ai-btn:hover { background: #5B4FFF; color: #ffffff; box-shadow: 0 0 15px rgba(91, 79, 255, 0.25); }
-                .pulse-ai { animation: pulseAI 1s infinite alternate; background: #5B4FFF; color: #ffffff; pointer-events: none; }
-                @keyframes pulseAI { from { box-shadow: 0 0 5px #5B4FFF; } to { box-shadow: 0 0 20px #5B4FFF; } }
+                /* FORM */
+                .forge-form-pane { flex: 1; display: flex; flex-direction: column; gap: 30px;}
 
-                .divider { height: 1px; background: #e5e7eb; margin: 40px 0; }
-                .section-title { color: #000000; font-size: 16px; margin-bottom: 20px; border-left: 4px solid #5B4FFF; padding-left: 15px; }
+                /* CARDS */
+                .saas-card {
+                    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;
+                    padding: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                }
                 
-                .question-module { background: #fafafa; border: 1px solid #e5e7eb; border-radius: 15px; padding: 30px; margin-bottom: 25px; transition: 0.3s; border-left: 3px solid #e5e7eb; min-height: 200px; width: 100%; }
-                .question-module:hover { border-color: #5B4FFF; border-left-color: #5B4FFF; }
+                .setup-card { position: relative; }
+                .card-badge { position: absolute; top: 20px; right: 20px; font-size: 10px; color: #94a3b8; letter-spacing: 2px; }
+
+                /* LAYOUT UTILS */
+                .param-layout, .q-row { display: flex; gap: 30px; margin-bottom: 25px; }
+                .form-group { flex: 1; display: flex; flex-direction: column;}
+                .flex-2 { flex: 2; }
+                .full-width { width: 100%; margin-bottom: 25px;}
                 
-                .q-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #1a1a2e; margin-bottom: 20px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; }
-                .q-actions { display: flex; gap: 15px; align-items: center; }
-                .questions-section { margin-top: 30px; width: 100%; }
-                .remove-btn { background: transparent; border: none; color: #ef4444; cursor: pointer; font-family: 'Orbitron'; font-size: 10px; transition: 0.3s; }
-                .remove-btn:hover { text-shadow: 0 0 10px #ef4444; }
-
-                .q-row { display: flex; gap: 30px; margin-top: 20px; }
-                .input-field.flex-2 { flex: 2; }
-                .input-field.flex-1 { flex: 1; }
+                .form-group label { font-size: 11px; font-weight: 700; color: #0f172a; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
                 
-                .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-                .mcq-correct-selector { width: 100%; border-color: #5B4FFF; color: #5B4FFF; }
+                /* INPUTS */
+                .clean-input, .clean-select {
+                    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+                    color: #0f172a; padding: 16px; font-family: 'Inter'; font-size: 15px;
+                    outline: none; transition: 0.2s; width: 100%;
+                }
+                .clean-input:focus, .clean-select:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
+                .clean-input::placeholder { color: #cbd5e1; }
+                
+                .q-textarea { min-height: 100px; resize: vertical; line-height: 1.6;}
+                
+                /* AI ZONE */
+                .ai-zone { margin-top: 5px; }
+                .ai-row { display: flex; gap: 15px; align-items: center;}
+                .ai-topic-input { flex: 2; }
+                .ai-count-input { flex: 0.5; text-align: center; color: #5B4FFF; font-weight: 700;}
 
-                .add-q-btn { width: 100%; padding: 16px 24px; background: transparent; border: 1px dashed #5B4FFF; color: #5B4FFF; border-radius: 10px; cursor: pointer; transition: 0.3s; margin-bottom: 40px; font-size: 15px; min-height: 52px; }
-                .add-q-btn:hover { background: rgba(91, 79, 255, 0.05); }
+                .btn-ai {
+                    flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px;
+                    height: 52px; background: transparent; border: 1px solid #c7d2fe; border-radius: 8px;
+                    cursor: pointer; transition: 0.3s; color: #5B4FFF;
+                }
+                .btn-ai:hover { background: #e0e7ff; }
+                .btn-ai.generating { border-color: #5B4FFF; background: #e0e7ff; animation: pulse 1s infinite; pointer-events: none;}
+                .btn-ai .icon { font-size: 16px; }
+                .btn-ai .text { font-size: 10px; font-weight: 700; letter-spacing: 1px;}
 
-                .submit-forge-btn { width: 100%; padding: 20px 24px; background: #5B4FFF; border: none; border-radius: 10px; color: #ffffff; font-weight: 600; font-size: 16px; cursor: pointer; box-shadow: 0 4px 24px rgba(91, 79, 255, 0.25); transition: 0.3s; min-height: 56px; }
-                .submit-forge-btn:hover { background: #4a3fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.35); }
-                .submit-forge-btn.loading { background: #f5f5f5; color: #5B4FFF; cursor: not-allowed; box-shadow: none; }
+                @keyframes pulse { 0%, 100% { box-shadow: 0 0 10px rgba(91,79,255,0.4); } 50% { box-shadow: 0 0 25px rgba(91,79,255,0.7); } }
+
+                .divider { height: 1px; background: #e2e8f0; margin: 30px 0;}
+
+                /* QUESTIONS LIST */
+                .questions-section { flex: 1; display: flex; flex-direction: column; gap: 20px;}
+                .section-header { margin-bottom: 20px; }
+                .section-title { font-size: 18px; font-weight: 700; margin: 0; color: #0f172a;}
+                
+                /* QUESTION NODE */
+                .question-node { padding: 30px; }
+                .question-node:hover { border-color: #5B4FFF;}
+                
+                .node-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; margin-bottom: 30px;}
+                .node-id { font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 2px;}
+                .node-actions { display: flex; gap: 15px; align-items: center;}
+                
+                .type-select { width: auto; font-size: 10px; padding: 10px 15px; height: auto; border-color: #e2e8f0; font-weight: 700;}
+                .btn-remove-node { background: transparent; border: none; color: #f87171; font-weight: 700; font-size: 10px; cursor: pointer; letter-spacing: 1px; }
+                .btn-remove-node:hover { text-shadow: 0 0 10px #fecaca; }
+
+                /* MCQ */
+                .variant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 25px; }
+                .correct-select { border-color: #c7d2fe; color: #5B4FFF; font-weight: 700; }
+
+                /* ACTION BUTTONS */
+                .btn-add-node {
+                    width: 100%; padding: 16px; background: #ffffff; border: 1px dashed #c7d2fe;
+                    color: #5B4FFF; border-radius: 8px; cursor: pointer; transition: 0.2s;
+                    font-weight: 700; font-size: 12px; letter-spacing: 1px; margin-top: 10px; margin-bottom: 40px;
+                }
+                .btn-add-node:hover { border-style: solid; background: #e0e7ff; }
+
+                .btn-deploy {
+                    width: 100%; padding: 22px; background: #0f172a; color: #ffffff;
+                    border: none; border-radius: 12px; font-weight: 700; font-size: 16px;
+                    cursor: pointer; transition: 0.3s; letter-spacing: 2px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                    margin-bottom: 50px;
+                }
+                .btn-deploy:hover { background: #5B4FFF; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(91, 79, 255, 0.3); }
+                .btn-deploy.loading { background: #cbd5e1; color: #64748b; cursor: not-allowed; transform: none; box-shadow: none;}
             `}</style>
         </div>
     );

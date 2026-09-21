@@ -23,9 +23,6 @@ const Notification = ({ message, type = 'info', onClose }) => {
             setProgress((prev) => Math.max(prev - step, 0));
         }, intervalTime);
 
-        // Optional: Trigger a subtle "ping" sound here if you have an asset
-        // new Audio('/assets/notif_ping.mp3').play().catch(() => {});
-
         return () => {
             clearTimeout(timer);
             clearInterval(progressInterval);
@@ -34,63 +31,70 @@ const Notification = ({ message, type = 'info', onClose }) => {
 
     if (!message) return null;
 
-    // 2. Theme System
+    // 2. EduX Light Theme System
     const themes = {
-        info:    { color: '#5B4FFF', label: 'SYSTEM', icon: '📡' },
-        success: { color: '#10b981', label: 'SUCCESS', icon: '✅' },
-        warning: { color: '#f59e0b', label: 'WARNING', icon: '⚠️' },
-        error:   { color: '#ef4444', label: 'ERROR', icon: '🚨' }
+        info:    { color: '#5B4FFF', label: 'SYSTEM MESSAGE' },
+        success: { color: '#10b981', label: 'SUCCESS' },
+        warning: { color: '#f59e0b', label: 'WARNING' },
+        error:   { color: '#ef4444', label: 'ERROR' }
     };
 
     const active = themes[type] || themes.info;
 
     return (
-        <div className={`notif-wrapper ${type}`}>
-            <div className="notif-glow" style={{ background: active.color }}></div>
+        <div className="EduX-notification">
+            {/* Bold Left Accent Line */}
+            <div className="notif-accent" style={{ backgroundColor: active.color }}></div>
 
             <div className="notif-content">
                 <div className="notif-header">
-                    <span className="notif-label orbitron" style={{ color: active.color }}>
-                        {active.icon} {active.label}
+                    <span className="notif-label" style={{ color: active.color }}>
+                        {active.label}
                     </span>
                     <button className="notif-close" onClick={onClose}>✕</button>
                 </div>
                 <div className="notif-message">{message}</div>
             </div>
 
-            {/* Tactical Progress Bar */}
+            {/* Subtle Progress Bar */}
             <div className="notif-progress-track">
                 <div
                     className="notif-progress-fill"
-                    style={{ width: `${progress}%`, background: active.color }}
+                    style={{ width: `${progress}%`, backgroundColor: active.color }}
                 ></div>
             </div>
 
+            {/* NOTE: If you prefer keeping CSS in a separate file (like we did with TakeQuiz.css), 
+              you can cut this <style> block and move it to a Notification.css file! 
+            */}
             <style>{`
-                .notif-wrapper {
+                .EduX-notification {
                     position: fixed;
-                    bottom: 40px;
-                    left: 40px;
+                    bottom: 30px;
+                    right: 30px;
                     width: 380px;
-                    background: linear-gradient(135deg, #16213e, #1a1a2e);
-                    backdrop-filter: blur(20px) saturate(180%);
-                    -webkit-backdrop-filter: blur(20px) saturate(180%);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 16px;
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 4px;
                     z-index: 10000;
-                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-                    padding: 20px;
-                    animation: hudSlideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                    display: flex;
+                    flex-direction: column;
+                    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                     overflow: hidden;
+                    font-family: 'Inter', -apple-system, sans-serif;
                 }
 
-                .notif-glow {
+                .notif-accent {
                     position: absolute;
                     left: 0;
                     top: 0;
+                    bottom: 0;
                     width: 4px;
-                    height: 100%;
-                    box-shadow: 0 0 20px currentColor;
+                }
+
+                .notif-content {
+                    padding: 20px 20px 20px 24px; /* Extra left padding to offset the accent line */
                 }
 
                 .notif-header {
@@ -102,35 +106,40 @@ const Notification = ({ message, type = 'info', onClose }) => {
 
                 .notif-label {
                     font-size: 10px;
-                    font-weight: 700;
-                    letter-spacing: 2px;
+                    font-weight: 800;
+                    letter-spacing: 1.5px;
                     text-transform: uppercase;
                 }
 
                 .notif-message {
                     font-size: 14px;
-                    color: #a0a0b0;
+                    color: #6b7280;
                     line-height: 1.5;
-                    font-weight: 400;
+                    font-weight: 500;
                 }
 
                 .notif-close {
                     background: transparent;
                     border: none;
-                    color: #a0a0b0;
+                    color: #9ca3af;
                     cursor: pointer;
                     font-size: 14px;
-                    transition: 0.2s;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: color 0.2s;
                 }
-                .notif-close:hover { color: #ffffff; transform: scale(1.2); }
+
+                .notif-close:hover {
+                    color: #1a1a2e;
+                }
 
                 .notif-progress-track {
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
                     width: 100%;
-                    height: 2px;
-                    background: rgba(255, 255, 255, 0.03);
+                    height: 3px;
+                    background: #f3f4f6;
+                    margin-top: auto;
                 }
 
                 .notif-progress-fill {
@@ -138,16 +147,26 @@ const Notification = ({ message, type = 'info', onClose }) => {
                     transition: width 0.05s linear;
                 }
 
-                .orbitron { font-family: 'Orbitron', sans-serif; }
-
-                @keyframes hudSlideIn {
-                    from { transform: translateX(-100%) skewX(-5deg); opacity: 0; }
-                    to { transform: translateX(0) skewX(0); opacity: 1; }
+                @keyframes slideUpFade {
+                    from { 
+                        transform: translateY(20px); 
+                        opacity: 0; 
+                    }
+                    to { 
+                        transform: translateY(0); 
+                        opacity: 1; 
+                    }
                 }
 
-                /* Variant specific glows */
-                .error { border-color: rgba(239, 68, 68, 0.2); }
-                .success { border-color: rgba(16, 185, 129, 0.2); }
+                /* Mobile Responsiveness */
+                @media (max-width: 600px) {
+                    .EduX-notification {
+                        bottom: 20px;
+                        right: 20px;
+                        left: 20px;
+                        width: auto; /* Stretches to fill mobile screen */
+                    }
+                }
             `}</style>
         </div>
     );

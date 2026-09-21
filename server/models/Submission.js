@@ -1,5 +1,5 @@
 /**
- * ➲ SCIO_SYSTEM_OS v3.0 - ARCHIVE_CORE
+ * ➲ EduX_SYSTEM_OS v3.0 - ARCHIVE_CORE
  * ➲ FUNCTION: Mission Persistence & AI Telemetry Storage
  */
 
@@ -39,6 +39,16 @@ const submissionSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     }, // ➲ NEW: Logs if student left the frame
+    security_violations: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    integrity_status: {
+        type: String,
+        enum: ['VERIFIED', 'BREACH_DETECTED'],
+        default: 'VERIFIED'
+    },
 
     // --- 🧠 NEURAL_EVALUATION_DATA ---
     final_score: {
