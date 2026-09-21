@@ -48,9 +48,9 @@ function App() {
         return (
             <div className="bios-screen">
                 <div className="bios-content">
-                    <div className="bios-header orbitron">EduX_SYSTEM_OS v3.0</div>
+                    <div className="bios-header orbitron">SCIO_SYSTEM_OS v3.0</div>
                     <div className="bios-main">
-                        <div className="bios-logo orbitron">EduX<span className="blink">_</span></div>
+                        <div className="bios-logo orbitron">SCIO<span className="blink">_</span></div>
                         <div className="bios-loader">
                             <div className="bios-bar"></div>
                         </div>

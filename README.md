@@ -1,6 +1,6 @@
-# ➲ EduX AI: Neural Core V1
+# ➲ SCIO AI: Neural Core V1
 
-EduX AI is a next-generation, anti-cheat examination platform. It leverages a dual-backend microservice architecture combining Node.js for data routing and Python for real-time computer vision and generative AI grading.
+SCIO AI is a next-generation, anti-cheat examination platform. It leverages a dual-backend microservice architecture combining Node.js for data routing and Python for real-time computer vision and generative AI grading.
 
 ## 🏗️ System Architecture
 
@@ -12,7 +12,7 @@ EduX AI is a next-generation, anti-cheat examination platform. It leverages a du
 
 ## ⚙️ Initial Setup & Installation
 
-You will need **Node.js**, **Python 3.10+**, and a running **MongoDB** instance (local or Atlas) to boot the EduX Core.
+You will need **Node.js**, **Python 3.10+**, and a running **MongoDB** instance (local or Atlas) to boot the SCIO Core.
 
 ### 1. The Mainframe (Node.js)
 Open a terminal and navigate to the `server` directory:

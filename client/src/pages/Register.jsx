@@ -1,12 +1,13 @@
+// client/src/pages/Register.jsx
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Notification from '../components/Notification';
+import Notification from '../components/Notification'; // ➲ Tactical HUD Integration
 
 const Register = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('student'); 
+    const [role, setRole] = useState('student'); // Default role
     const [isLoading, setIsLoading] = useState(false);
     const [notify, setNotify] = useState({ message: '', type: '' });
 
@@ -27,11 +28,14 @@ const Register = () => {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('EduX_user', JSON.stringify(data));
-                setNotify({ message: 'Account created successfully! Welcome to EduX.', type: 'success' });
+                // ➲ CRITICAL: Save the exact same key the Dashboard looks for
+                localStorage.setItem('scio_user', JSON.stringify(data));
+                setNotify({ message: 'Account created successfully! Welcome to SCIO.', type: 'success' });
+
                 setTimeout(() => navigate('/dashboard'), 1500);
             } else {
                 setNotify({ message: data.message || 'Registration failed. Please try again.', type: 'error' });
+                
             }
         } catch (err) {
             setNotify({ message: 'Connection error. Please check your internet.', type: 'error' });
@@ -41,18 +45,18 @@ const Register = () => {
     };
 
     return (
-        <div className="EduX-root">
-            <div className="register-container">
-                <div className="section-tag">SECTION: USER_REGISTRATION</div>
-                
-                <div className="hero-text">
-                    <h1>Create<span>Account.</span></h1>
-                    <p>Join the EduX network to monitor performance and manage real-time session data.</p>
-                </div>
+        <div className="register-root">
+            {/* TERMINAL MODULE */}
+            <div className="terminal-card glass-panel">
+                <header style={{ marginBottom: '30px' }}>
+                    <h1 className="orbitron title">SCIO</h1>
+                    <p className="orbitron subtitle">CREATE_ACCOUNT</p>
+                </header>
 
-                <form onSubmit={handleRegister} className="register-form">
-                    <div className="input-group">
-                        <label>FULL_NAME</label>
+                <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                    <div className="input-field">
+                        <label className="orbitron">FULL_NAME</label>
                         <input
                             type="text"
                             placeholder="e.g. Kalashiva B P"
@@ -62,61 +66,65 @@ const Register = () => {
                         />
                     </div>
 
-                    <div className="input-row">
-                        <div className="input-group">
-                            <label>EMAIL_ADDRESS</label>
-                            <input
-                                type="email"
-                                placeholder="agent@EduX.io"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <label>PASSWORD</label>
-                            <input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength="6"
-                            />
-                        </div>
+                    <div className="input-field">
+                        <label className="orbitron">EMAIL_ADDRESS</label>
+                        <input
+                            type="email"
+                            placeholder="agent@scio.io"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
                     </div>
 
-                    <div className="input-group">
-                        <label>SELECT_ROLE</label>
+                    <div className="input-field">
+                        <label className="orbitron">PASSWORD</label>
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength="6"
+                        />
+                    </div>
+
+                    {/* ROLE SELECTOR */}
+                    <div className="input-field">
+                        <label className="orbitron">SELECT_ROLE</label>
                         <div className="role-selector">
                             <button
                                 type="button"
                                 className={`role-btn ${role === 'student' ? 'active' : ''}`}
                                 onClick={() => setRole('student')}
                             >
-                                STUDENT
+                                🧑‍🎓 Student
                             </button>
                             <button
                                 type="button"
                                 className={`role-btn ${role === 'teacher' ? 'active' : ''}`}
                                 onClick={() => setRole('teacher')}
                             >
-                                TEACHER
+                                👨‍🏫 Teacher
                             </button>
                         </div>
                     </div>
 
-                    <button type="submit" className={`submit-btn ${isLoading ? 'loading' : ''}`}>
-                        {isLoading ? 'ESTABLISHING_LINK...' : 'CREATE_ACCOUNT'}
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className={`initiate-btn ${isLoading ? 'loading' : ''}`}
+                    >
+                        {isLoading ? 'Creating account...' : 'CREATE_ACCOUNT'}
                     </button>
                 </form>
 
-                <div className="auth-footer">
-                    Already have an account? <Link to="/login">Sign In</Link>
+                <div className="footer-links">
+                    <p>Already have an account? <Link to="/login" className="login-link">Sign In</Link></p>
                 </div>
             </div>
 
+            {/* Tactical Notification HUD */}
             <Notification
                 message={notify.message}
                 type={notify.type}
@@ -124,167 +132,69 @@ const Register = () => {
             />
 
             <style>{`
-                .EduX-root {
+                .register-root {
                     min-height: 100vh;
-                    background-color: #fafafa;
-                    background-image: 
-                        linear-gradient(#f0f0f0 1px, transparent 1px),
-                        linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
-                    background-size: 40px 40px;
+                    background: #fafafa;
+                    color: #1a1a2e;
+                    font-family: 'Inter', sans-serif;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    font-family: 'Inter', -apple-system, sans-serif;
                     padding: 40px;
                 }
 
-                .register-container {
+                .terminal-card {
                     width: 100%;
-                    max-width: 580px;
-                    background: white;
+                    maxWidth: 480px;
                     padding: 60px;
-                    border: 1px solid #e5e7eb;
-                    position: relative;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-                }
-
-                .section-tag {
-                    font-size: 11px;
-                    font-weight: 800;
-                    color: #5B4FFF;
-                    letter-spacing: 1.5px;
-                    margin-bottom: 24px;
-                    border-left: 3px solid #5B4FFF;
-                    padding-left: 15px;
-                    text-transform: uppercase;
-                }
-
-                .hero-text h1 {
-                    font-size: 56px;
-                    font-weight: 800;
-                    color: #1a1a2e;
-                    margin: 0;
-                    letter-spacing: -2px;
-                    line-height: 1;
-                }
-
-                .hero-text h1 span {
-                    color: #5B4FFF;
-                }
-
-                .hero-text p {
-                    font-size: 15px;
-                    color: #6b7280;
-                    line-height: 1.6;
-                    margin: 20px 0 40px 0;
-                }
-
-                .register-form {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 20px;
-                }
-
-                .input-row {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 15px;
-                }
-
-                .input-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-
-                .input-group label {
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: #9ca3af;
-                    letter-spacing: 1px;
-                }
-
-                .input-group input {
-                    padding: 16px;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 4px;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                }
-
-                .input-group input:focus {
-                    outline: none;
-                    border-color: #5B4FFF;
-                    box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.05);
-                }
-
-                .role-selector {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 10px;
-                }
-
-                .role-btn {
-                    padding: 12px;
-                    background: #f9fafb;
-                    border: 1px solid #e5e7eb;
-                    font-size: 11px;
-                    font-weight: 700;
-                    color: #6b7280;
-                    cursor: pointer;
-                    transition: 0.2s;
-                }
-
-                .role-btn.active {
-                    background: #5B4FFF;
-                    border-color: #5B4FFF;
-                    color: white;
-                }
-
-                .submit-btn {
-                    margin-top: 15px;
-                    padding: 18px;
-                    background: #1a1a2e;
-                    color: white;
-                    border: none;
-                    font-weight: 700;
-                    font-size: 13px;
-                    letter-spacing: 2px;
-                    cursor: pointer;
-                    transition: 0.3s;
-                }
-
-                .submit-btn:hover {
-                    background: #5B4FFF;
-                }
-
-                .submit-btn.loading {
-                    background: #f3f4f6;
-                    color: #9ca3af;
-                    cursor: not-allowed;
-                }
-
-                .auth-footer {
-                    margin-top: 30px;
-                    font-size: 13px;
-                    color: #6b7280;
                     text-align: center;
+                    z-index: 10;
+                    background: linear-gradient(135deg, #16213e, #1a1a2e);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
+                    backdrop-filter: blur(20px);
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
                 }
 
-                .auth-footer a {
-                    color: #5B4FFF;
-                    text-decoration: none;
-                    font-weight: 600;
+                .orbitron { fontFamily: 'Orbitron', sans-serif; letterSpacing: 1px; }
+                .title { fontSize: 42px; color: #1a1a2e; textShadow: 0 0 20px rgba(91, 79, 255, 0.3); margin: 0; }
+                .subtitle { fontSize: 10px; color: #6b7280; marginTop: 10px; letterSpacing: 3px; text-transform: uppercase; }
+
+                .input-field { textAlign: left; }
+                .input-field label { fontSize: 14px; color: #6b7280; marginLeft: 5px; marginBottom: 8px; display: block; text-transform: none; letter-spacing: 0.5px; font-weight: 500; }
+                
+                input {
+                    width: 100%; padding: 16px 20px; background: #ffffff; border: 1px solid #e5e7eb;
+                    border-radius: 10px; color: #1a1a2e; outline: none; font-family: 'Inter';
+                    font-weight: 400; transition: 0.3s; min-height: 52px; font-size: 15px;
+                }
+                input:focus { border-color: #5B4FFF; box-shadow: 0 0 0 3px rgba(91, 79, 255, 0.1); }
+
+                /* Role Selector UI */
+                .role-selector { display: flex; gap: 10px; }
+                .role-btn {
+                    flex: 1; padding: 12px; background: #f5f5f5; border: 1px solid #e5e7eb;
+                    color: #a0a0b0; border-radius: 10px; cursor: pointer; transition: 0.3s;
+                    font-family: 'Inter'; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+                }
+                .role-btn:hover { border-color: #5B4FFF; color: #5B4FFF; }
+                .role-btn.active {
+                    background: #5B4FFF; border-color: #5B4FFF; color: #ffffff;
+                    box-shadow: 0 4px 12px rgba(91, 79, 255, 0.25);
                 }
 
-                .auth-footer a:hover {
-                    text-decoration: underline;
+                .initiate-btn {
+                    width: 100%; padding: 18px 24px; marginTop: 10px;
+                    background: #1a1a2e; color: #ffffff; border: none; border-radius: 10px; font-weight: 600;
+                    font-family: 'Inter'; cursor: pointer; transition: 0.3s;
+                    text-transform: none; letter-spacing: 0.5px; min-height: 52px; font-size: 16px;
                 }
+                .initiate-btn:hover { background: #5B4FFF; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(91, 79, 255, 0.25); }
+                .initiate-btn.loading { background: #f5f5f5; cursor: not-allowed; box-shadow: none; color: #5B4FFF; border: 1px solid #5B4FFF; }
 
-                @media (max-width: 600px) {
-                    .input-row { grid-template-columns: 1fr; }
-                    .register-container { padding: 30px; }
-                }
+                .footer-links { marginTop: 30px; fontSize: 12px; color: #a0a0b0; }
+                .login-link { color: #5B4FFF; textDecoration: none; font-weight: 600; transition: 0.3s; }
+                .login-link:hover { color: #9d50bb; }
             `}</style>
         </div>
     );

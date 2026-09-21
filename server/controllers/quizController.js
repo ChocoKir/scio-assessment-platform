@@ -1,5 +1,5 @@
 /**
- * ➲ EduX_SYSTEM_OS v3.0 - MISSION_CONTROLLER
+ * ➲ SCIO_SYSTEM_OS v3.0 - MISSION_CONTROLLER
  * ➲ FUNCTION: Manages Quiz Creation, Retrieval, and Deletion
  */
 

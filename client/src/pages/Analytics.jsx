@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
-import html2pdf from 'html2pdf.js';
+import html2pdf from 'html2pdf.js'; // ➲ IMPORTED PDF ENGINE
 
 const Analytics = () => {
     const { quizId } = useParams();
     const navigate = useNavigate();
 
+    // --- STATE CORE ---
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [notify, setNotify] = useState({ message: '', type: '' });
     const [expandedId, setExpandedId] = useState(null);
 
+    // --- DATA FETCHING ---
     useEffect(() => {
-        const storedUser = localStorage.getItem('EduX_user');
+        const storedUser = localStorage.getItem('scio_user');
         if (!storedUser || JSON.parse(storedUser).role !== 'teacher') {
             setNotify({ message: 'Access denied. Teacher access required.', type: 'error' });
             setTimeout(() => navigate('/dashboard'), 2000);
@@ -39,12 +41,17 @@ const Analytics = () => {
         fetchAnalytics();
     }, [quizId, navigate]);
 
+    // --- HANDLERS ---
     const toggleDetails = (subId) => {
         setExpandedId(expandedId === subId ? null : subId);
+        if (expandedId !== subId) {
+            setNotify({ message: 'Loading results...', type: 'info' });
+        }
     };
 
+    // --- DELETE ALL RESULTS ---
     const handlePurgeAll = async () => {
-        if (!window.confirm("Delete all student results for this assessment?")) return;
+        if (!window.confirm("Delete all student results for this assessment? (Assessment will remain)")) return;
         try {
             const response = await fetch(`http://localhost:5000/api/submissions/quiz/${quizId}`, { method: 'DELETE' });
             if (response.ok) {
@@ -56,144 +63,136 @@ const Analytics = () => {
         }
     };
 
+    // ➲ UPGRADE: PDF GENERATOR ENGINE
     const exportPDF = (subId, studentName) => {
         setNotify({ message: 'Generating report...', type: 'info' });
         const element = document.getElementById(`report-${subId}`);
+
+        // Temporarily hide UI buttons during the print capture
         const buttons = element.querySelectorAll('button');
         buttons.forEach(btn => btn.style.display = 'none');
 
         const opt = {
-            margin: 0.5,
-            filename: `EduX_Report_${studentName.replace(/\s+/g, '_')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            margin:       0.5,
+            filename:     `SCIO_Intel_${studentName.replace(/\s+/g, '_')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#050505' }, // Matches dark UI
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
+            // Restore UI buttons after generation
             buttons.forEach(btn => btn.style.display = 'block');
             setNotify({ message: 'Report saved successfully.', type: 'success' });
         });
     };
 
-    if (loading) return <div className="loader-root"><h1>LOADING_ANALYTICS...</h1></div>;
+    if (loading) return <div className="loader-root orbitron"><div className="pulse">Loading...</div></div>;
 
     const averageScore = submissions.length > 0
         ? (submissions.reduce((acc, curr) => acc + curr.percentage, 0) / submissions.length).toFixed(1)
         : 0;
 
     return (
-        <div className="EduX-root">
+        <div className="analytics-root">
             <div className="analytics-container">
-                
-                {/* TOP HEADER */}
+                {/* --- HUD HEADER --- */}
                 <header className="intel-header">
                     <div className="header-left">
-                        <button onClick={() => navigate('/dashboard')} className="back-link ">← RETURN_TO_DASHBOARD</button>
-                        <div className="section-tag">SECTION: PERFORMANCE_ANALYTICS</div>
-                        <h1 className="main-title">Assessment<span>Intel.</span></h1>
-                        <p className="id-tag">ID: {quizId?.toUpperCase()}</p>
+                        <button onClick={() => navigate('/dashboard')} className="back-btn orbitron">← COMMAND_HUB</button>
+                        <h1 className="orbitron main-title">ASSESSMENT_<span className="accent">ANALYTICS</span></h1>
+                        <p className="id-tag">ASSESSMENT_ID: {quizId?.toUpperCase()}</p>
                     </div>
 
                     <div className="header-right">
-                        <div className="avg-card">
-                            <label>CLASS_AVERAGE</label>
-                            <div className="avg-value" style={{ color: averageScore >= 70 ? '#10b981' : '#ef4444' }}>
-                                {averageScore}%
-                            </div>
+                        <div className="avg-box glass-panel">
+                            <div className="label orbitron">CLASS_AVERAGE</div>
+                            <div className="score orbitron" style={{ color: averageScore >= 70 ? '#00ffa3' : '#ff4d4d' }}>{averageScore}%</div>
                         </div>
-                        <button className="danger-action" onClick={handlePurgeAll}>PURGE_ALL_DATA</button>
+                        <button className="purge-all-btn orbitron" onClick={handlePurgeAll}>DELETE_ALL</button>
                     </div>
                 </header>
 
-                {/* KPI STRIP */}
-                <div className="kpi-strip">
-                    <div className="kpi-item">
-                        <label>TOTAL_CANDIDATES</label>
-                        <div className="val">{submissions.length}</div>
-                    </div>
-                    <div className="kpi-item">
-                        <label>AI_ENGINE</label>
-                        <div className="val">YOLO_V8_PRO</div>
-                    </div>
-                    <div className="kpi-item">
-                        <label>SECURITY_LEVEL</label>
-                        <div className="val">AES_256_ACTIVE</div>
-                    </div>
+                {/* --- KPI MODULE --- */}
+                <div className="kpi-grid">
+                    {[
+                        { label: 'STUDENTS', val: submissions.length },
+                        { label: 'SYSTEM_STATUS', val: 'NOMINAL', highlight: true },
+                        { label: 'CAMERA', val: 'YOLO_V8' },
+                        { label: 'SECURITY', val: 'AES_256' }
+                    ].map((kpi, i) => (
+                        <div key={i} className={`kpi-card glass-panel ${kpi.highlight ? 'active-kpi' : ''}`}>
+                            <small className="orbitron">{kpi.label}</small>
+                            <div className="val">{kpi.val}</div>
+                        </div>
+                    ))}
                 </div>
 
-                <h2 className="grid-label">STUDENT_SUBMISSIONS</h2>
+                <h2 className="section-label orbitron">STUDENT_RESULTS</h2>
 
-                {/* CANDIDATE LIST */}
-                <div className="candidate-list">
+                <div className="candidate-grid">
                     {submissions.length === 0 ? (
-                        <div className="empty-state">NO_SUBMISSIONS_DETECTED</div>
+                        <div className="empty-state glass-panel orbitron">No results found</div>
                     ) : (
                         submissions.map((sub) => {
-                            const hasIssues = Boolean(
-                                sub.integrity_status === 'BREACH_DETECTED' ||
-                                sub.security_violations > 0 ||
-                                sub.tabSwitches > 0 ||
-                                sub.phoneDetected ||
-                                sub.multipleFacesDetected ||
-                                sub.faceMissingDetected
-                            );
+                                    const hasIssues = sub.tabSwitches > 0 || sub.phoneDetected || sub.multipleFacesDetected || sub.faceMissingDetected;
 
                             return (
-                                <div key={sub._id} id={`report-${sub._id}`} className={`candidate-card ${hasIssues ? 'has-breach' : ''}`}>
-                                    
-                                    <div className="card-top">
-                                        <div className="student-info">
-                                            <h3>{sub.studentName}</h3>
-                                            <span className="timestamp">SYNCED: {new Date(sub.createdAt).toLocaleString()}</span>
+                                // THE PDF TARGET ID
+                                <div key={sub._id} id={`report-${sub._id}`} className={`candidate-card glass-panel ${expandedId === sub._id ? 'expanded' : ''} ${hasIssues ? 'breach-border' : ''}`}>
+
+                                    <div className="badge-container">
+                                        {sub.phoneDetected && <span className="v-badge critical orbitron">⚠️ PHONE_DETECTED</span>}
+                                        {sub.multipleFacesDetected && <span className="v-badge warning orbitron">⚠️ MULTIPLE_FACES</span>}
+                                        {sub.faceMissingDetected && <span className="v-badge warning orbitron">⚠️ FACE_MISSING</span>}
+                                        {sub.tabSwitches > 0 && <span className="v-badge info orbitron">TABS: {sub.tabSwitches}</span>}
+                                    </div>
+
+                                    <div className="card-main-info">
+                                        <div>
+                                            <h3 className="candidate-name">{sub.studentName}</h3>
+                                            <div className="sync-date orbitron">SYNC: {new Date(sub.createdAt).toLocaleString()}</div>
                                         </div>
-                                        <div className="score-badge">
-                                            <div className="percent" style={{ color: sub.percentage >= 70 ? '#10b981' : '#ef4444' }}>{sub.percentage}%</div>
-                                            <div className="pts">{sub.final_score} / {sub.total_possible} PTS</div>
+                                        <div className="score-block">
+                                            <div className="candidate-score orbitron" style={{ color: sub.percentage >= 70 ? '#00ffa3' : '#ff4d4d' }}>{sub.percentage}%</div>
+                                            <div className="pts-label mono">{sub.final_score} / {sub.total_possible} PTS</div>
                                         </div>
                                     </div>
 
-                                    <div className="security-ribbon">
-                                        <div className="status-indicator">
-                                            {hasIssues ? (
-                                                <span className="text-red">● BREACH_DETECTED</span>
-                                            ) : (
-                                                <span className="text-green">● INTEGRITY_VERIFIED</span>
+                                    <div className="card-actions">
+                                        <div className="security-status orbitron">
+                                            STATUS: {hasIssues ? <span className="fail-text">🔴 ISSUES_DETECTED</span> : <span className="pass-text">🟢 SECURE</span>}
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '15px' }}>
+                                            <button onClick={() => toggleDetails(sub._id)} className={`details-btn orbitron ${expandedId === sub._id ? 'active' : ''}`}>
+                                                {expandedId === sub._id ? 'HIDE_DETAILS' : 'VIEW_DETAILS'}
+                                            </button>
+
+                                            {/* PDF EXPORT BUTTON */}
+                                            {expandedId === sub._id && (
+                                                <button onClick={() => exportPDF(sub._id, sub.studentName)} className="pdf-btn orbitron">
+                                                    📥 EXPORT_PDF
+                                                </button>
                                             )}
                                         </div>
-                                        <div className="breach-badges">
-                                            {sub.phoneDetected && <span className="b-tag red">PHONE</span>}
-                                            {sub.multipleFacesDetected && <span className="b-tag orange">MULTI_FACE</span>}
-                                            {sub.tabSwitches > 0 && <span className="b-tag gray">TABS: {sub.tabSwitches}</span>}
-                                        </div>
-                                    </div>
-
-                                    <div className="card-footer">
-                                        <button onClick={() => toggleDetails(sub._id)} className="secondary-btn">
-                                            {expandedId === sub._id ? 'HIDE_ANALYSIS' : 'VIEW_ANALYSIS'}
-                                        </button>
-                                        {expandedId === sub._id && (
-                                            <button onClick={() => exportPDF(sub._id, sub.studentName)} className="primary-btn">
-                                                GENERATE_PDF_REPORT
-                                            </button>
-                                        )}
                                     </div>
 
                                     {expandedId === sub._id && (
-                                        <div className="analysis-pane">
-                                            <label className="pane-label">AI_FEEDBACK_LOG</label>
-                                            {sub.detailed_results?.map((res, i) => (
-                                                <div key={i} className="feedback-row">
-                                                    <div className="q-header">
-                                                        <strong>Q{i+1}: {res.question}</strong>
-                                                        <span className="marks">{res.awarded_marks}/{res.possible_marks}</span>
+                                        <div className="detailed-intel-pane">
+                                            <div className="pane-header orbitron">AI_ANALYSIS:</div>
+                                            <div className="feedback-list">
+                                                {sub.detailed_results?.map((res, i) => (
+                                                    <div key={i} className="feedback-item" style={{ borderLeftColor: res.awarded_marks > (res.possible_marks / 2) ? '#00ffa3' : '#ff4d4d' }}>
+                                                        <p className="q-text mono"><strong>Question {i+1}:</strong> {res.question}</p>
+                                                        <p className="s-answer italic">"{res.student_answer || "NO_ANSWER"}"</p>
+                                                        <div className="ai-eval">
+                                                            <span className="orbitron label">AI_ANALYSIS:</span> {res.ai_feedback}
+                                                            <div className="marks-pill orbitron">SCORE: {res.awarded_marks} / {res.possible_marks}</div>
+                                                        </div>
                                                     </div>
-                                                    <p className="student-ans">"{res.student_answer || "NO_RESPONSE"}"</p>
-                                                    <div className="ai-box">
-                                                        <span className="ai-tag">AI_INSIGHT:</span> {res.ai_feedback}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -206,78 +205,63 @@ const Analytics = () => {
             <Notification message={notify.message} type={notify.type} onClose={() => setNotify({ message: '', type: '' })} />
 
             <style>{`
-                .EduX-root {
-                    min-height: 100vh;
-                    background-color: #fafafa;
-                    background-image: 
-                        linear-gradient(#f0f0f0 1px, transparent 1px),
-                        linear-gradient(90deg, #f0f0f0 1px, transparent 1px);
-                    background-size: 40px 40px;
-                    padding: 60px 20px;
-                    font-family: 'Inter', sans-serif;
-                }
-
-                .analytics-container { max-width: 1100px; margin: 0 auto; }
-
-                /* HEADER SECTION */
-                .intel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 50px; }
-                .back-link { background: none; border: none; color: #5B4FFF; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 20px; padding: 0; }
-                .section-tag { font-size: 11px; font-weight: 800; color: #5B4FFF; border-left: 3px solid #5B4FFF; padding-left: 12px; margin-bottom: 10px; }
-                .main-title { font-size: 48px; font-weight: 800; color: #1a1a2e; margin: 0; letter-spacing: -1.5px; }
-                .main-title span { color: #5B4FFF; }
-                .id-tag { font-size: 12px; color: #9ca3af; font-family: monospace; margin-top: 5px; }
-
-                .header-right { text-align: right; display: flex; flex-direction: column; gap: 15px; }
-                .avg-card { background: white; padding: 20px 30px; border: 1px solid #e5e7eb; border-radius: 4px; }
-                .avg-card label { font-size: 10px; font-weight: 800; color: #9ca3af; display: block; margin-bottom: 5px; }
-                .avg-value { font-size: 42px; font-weight: 800; line-height: 1; }
-                .danger-action { background: none; border: 1px solid #ef4444; color: #ef4444; padding: 8px 16px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 4px; }
-                .danger-action:hover { background: #ef4444; color: white; }
-
-                /* KPI STRIP */
-                .kpi-strip { display: flex; gap: 40px; background: #1a1a2e; color: white; padding: 30px; border-radius: 4px; margin-bottom: 50px; }
-                .kpi-item label { font-size: 10px; font-weight: 700; color: #6b7280; display: block; margin-bottom: 5px; }
-                .kpi-item .val { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
-
-                /* CANDIDATE CARDS */
-                .grid-label { font-size: 13px; font-weight: 800; color: #1a1a2e; margin-bottom: 20px; border-bottom: 2px solid #1a1a2e; padding-bottom: 10px; }
-                .candidate-list { display: flex; flex-direction: column; gap: 20px; }
-                .candidate-card { background: white; border: 1px solid #e5e7eb; padding: 35px; border-radius: 4px; transition: 0.2s; }
-                .candidate-card.has-breach { border-left: 6px solid #ef4444; }
+                .analytics-root { min-height: 100vh; background: #fafafa; color: #1a1a2e; padding: 40px; font-family: 'Inter', sans-serif; position: relative; overflow-x: hidden; }
+                .analytics-container { max-width: 1400px; margin: 0 auto; z-index: 10; position: relative; }
                 
-                .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
-                .student-info h3 { font-size: 24px; margin: 0; font-weight: 800; color: #1a1a2e; }
-                .timestamp { font-size: 12px; color: #9ca3af; }
-                .score-badge { text-align: right; }
-                .score-badge .percent { font-size: 32px; font-weight: 800; line-height: 1; }
-                .score-badge .pts { font-size: 12px; font-weight: 700; color: #6b7280; margin-top: 5px; }
+                .intel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px; }
+                .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
+                .main-title { font-size: 42px; margin: 0; letter-spacing: 4px; color: #1a1a2e; }
+                .accent { color: #5B4FFF; }
+                .id-tag { color: #6b7280; font-size: 11px; margin-top: 10px; font-family: monospace; letter-spacing: 2px; }
+                
+                .back-btn { background: rgba(255,255,255,0.02); border: 1px solid #e5e7eb; color: #6b7280; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 11px; transition: 0.3s; margin-bottom: 20px; }
+                .back-btn:hover { background: #5B4FFF; color: #ffffff; box-shadow: 0 4px 12px rgba(91, 79, 255, 0.25); }
+                
+                .purge-all-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 10px 20px; border-radius: 8px; font-size: 10px; cursor: pointer; transition: 0.3s; }
+                .purge-all-btn:hover { background: #ef4444; color: #ffffff; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); }
 
-                .security-ribbon { display: flex; justify-content: space-between; align-items: center; background: #f9fafb; padding: 12px 20px; border-radius: 4px; margin-bottom: 25px; }
-                .status-indicator { font-size: 11px; font-weight: 800; }
-                .text-red { color: #ef4444; } .text-green { color: #10b981; }
-                .breach-badges { display: flex; gap: 8px; }
-                .b-tag { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 3px; }
-                .b-tag.red { background: #fee2e2; color: #ef4444; }
-                .b-tag.orange { background: #ffedd5; color: #f59e0b; }
-                .b-tag.gray { background: #f3f4f6; color: #6b7280; }
+                .avg-box { padding: 25px 40px; text-align: right; border: 1px solid rgba(91, 79, 255, 0.2); border-radius: 15px; background: #ffffff; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .avg-box .score { font-size: 56px; font-weight: 900; line-height: 1; margin-top: 5px; color: #1a1a2e; }
+                .label { font-size: 10px; color: #6b7280; letter-spacing: 2px; }
 
-                .card-footer { display: flex; gap: 15px; }
-                .primary-btn { background: #5B4FFF; color: white; border: none; padding: 12px 24px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 4px; }
-                .secondary-btn { background: white; border: 1px solid #e5e7eb; color: #1a1a2e; padding: 12px 24px; font-size: 11px; font-weight: 700; cursor: pointer; border-radius: 4px; }
-                .secondary-btn:hover { border-color: #5B4FFF; }
+                .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 60px; }
+                .glass-panel { background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; backdrop-filter: none; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12); }
+                .kpi-card { padding: 25px; text-align: center; border-radius: 20px; }
+                .active-kpi { border-color: #10b981; background: rgba(16, 185, 129, 0.05); }
 
-                /* ANALYSIS PANE */
-                .analysis-pane { margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 30px; }
-                .pane-label { font-size: 10px; font-weight: 800; color: #5B4FFF; margin-bottom: 20px; display: block; }
-                .feedback-row { margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px dashed #f0f0f0; }
-                .q-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; color: #1a1a2e; }
-                .student-ans { font-style: italic; color: #6b7280; font-size: 14px; margin-bottom: 15px; background: #fdfdfd; padding: 10px; border-left: 2px solid #e5e7eb; }
-                .ai-box { font-size: 14px; color: #374151; line-height: 1.6; }
-                .ai-tag { font-weight: 800; color: #5B4FFF; font-size: 11px; margin-right: 5px; }
-                .marks { font-weight: 800; color: #10b981; }
+                .section-label { margin-bottom: 30px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; color: #1a1a2e; font-size: 14px; }
+                .candidate-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+                .candidate-card { padding: 40px; transition: 0.4s; position: relative; border-radius: 25px; background: #ffffff; border: 1px solid rgba(255, 255, 255, 0.08); }
+                .candidate-card.expanded { border-color: #5B4FFF; background: rgba(91, 79, 255, 0.02); }
+                .breach-border { border-color: rgba(239, 68, 68, 0.3) !important; }
+                
+                .badge-container { display: flex; gap: 10px; margin-bottom: 20px; }
+                .v-badge { font-size: 9px; padding: 6px 12px; border-radius: 5px; font-weight: 900; letter-spacing: 1px; }
+                .v-badge.critical { background: #ef4444; color: #ffffff; }
+                .v-badge.warning { background: #f59e0b; color: #1a1a2e; }
+                .v-badge.info { background: #6b7280; color: #ffffff; }
 
-                .empty-state { text-align: center; padding: 100px; color: #9ca3af; font-weight: 800; font-size: 20px; }
-                .loader-root { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+                .card-main-info { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; padding-bottom: 25px; margin-bottom: 25px; }
+                .candidate-name { font-size: 30px; margin: 0; font-weight: 800; color: #1a1a2e; }
+                .sync-date { color: #6b7280; font-size: 10px; margin-top: 8px; }
+                .candidate-score { font-size: 48px; font-weight: 900; color: #1a1a2e; }
+                .pts-label { text-align: right; font-size: 12px; color: #6b7280; }
+
+                .card-actions { display: flex; justify-content: space-between; align-items: center; }
+                .fail-text { color: #ff4d4d; } .pass-text { color: #00ffa3; }
+                
+                .details-btn { padding: 12px 25px; background: transparent; border: 1px solid #e5e7eb; color: #6b7280; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
+                .details-btn:hover { border-color: #5B4FFF; color: #ffffff; }
+                .details-btn.active { background: #5B4FFF; color: #ffffff; }
+                
+                .pdf-btn { padding: 12px 25px; background: #10b981; color: #ffffff; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 11px; }
+                .pdf-btn:hover { box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); transform: translateY(-2px); }
+
+                .detailed-intel-pane { margin-top: 40px; padding-top: 40px; border-top: 1px dashed #222; animation: slideUp 0.4s ease-out; }
+                .pane-header { color: #00d2ff; font-size: 11px; margin-bottom: 30px; letter-spacing: 3px; }
+                .feedback-item { padding: 25px; background: rgba(255,255,255,0.02); border-radius: 18px; margin-bottom: 20px; border-left: 4px solid; }
+                .q-text { font-size: 15px; margin-bottom: 10px; color: #ccc; }
+                .s-answer { color: #888; margin-bottom: 20px; font-size: 14px; }
             `}</style>
         </div>
     );

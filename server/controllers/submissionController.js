@@ -1,5 +1,5 @@
 /**
- * ➲ EduX_SYSTEM_OS v3.0 - ARCHIVE_LOGIC
+ * ➲ SCIO_SYSTEM_OS v3.0 - ARCHIVE_LOGIC
  * ➲ FUNCTION: Manages Mission Persistence & Analytics Retrieval
  */
 
@@ -18,9 +18,7 @@ const submitExam = async (req, res) => {
             tabSwitches,
             phoneDetected,        // ➲ NEW: Captured from Python Vision
             multipleFacesDetected, // ➲ NEW: Captured from Python Vision
-            faceMissingDetected,   // ➲ NEW: Captured from Python Vision
-            security_violations,
-            integrity_status
+            faceMissingDetected    // ➲ NEW: Captured from Python Vision
         } = req.body;
 
         // Extraction Protocol: Priority to Params, fallback to Body
@@ -30,25 +28,13 @@ const submitExam = async (req, res) => {
             return res.status(400).json({ message: "PROTOCOL_ERR: Missing Mission ID." });
         }
 
-        const normalizedTabSwitches = Number(tabSwitches || 0);
-        const normalizedViolationCount = Number(security_violations || 0);
-        const hasAnyViolation = Boolean(
-            normalizedTabSwitches > 0 ||
-            phoneDetected ||
-            multipleFacesDetected ||
-            faceMissingDetected ||
-            normalizedViolationCount > 0
-        );
-
         const submission = new Submission({
             quiz: quizId,
             studentName,
-            tabSwitches: normalizedTabSwitches,
-            phoneDetected: Boolean(phoneDetected),
-            multipleFacesDetected: Boolean(multipleFacesDetected),
-            faceMissingDetected: Boolean(faceMissingDetected),
-            security_violations: Math.max(normalizedViolationCount, normalizedTabSwitches + (phoneDetected ? 1 : 0) + (multipleFacesDetected ? 1 : 0) + (faceMissingDetected ? 1 : 0)),
-            integrity_status: hasAnyViolation ? 'BREACH_DETECTED' : 'VERIFIED',
+            tabSwitches: tabSwitches || 0,
+            phoneDetected: phoneDetected || false,
+            multipleFacesDetected: multipleFacesDetected || false,
+            faceMissingDetected: faceMissingDetected || false,
             final_score,
             total_possible,
             percentage,

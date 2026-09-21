@@ -49,7 +49,7 @@ const QuizAnalytics = () => {
         const url = URL.createObjectURL(blob);
 
         link.setAttribute("href", url);
-        link.setAttribute("download", `EduX_INTEL_REPORT_${quizId.toUpperCase()}.csv`);
+        link.setAttribute("download", `SCIO_INTEL_REPORT_${quizId.toUpperCase()}.csv`);
         link.click();
 
         setNotify({ message: 'Report exported successfully.', type: 'success' });

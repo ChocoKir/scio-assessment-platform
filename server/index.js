@@ -1,5 +1,5 @@
 /**
- * ➲ EduX_SYSTEM_OS v1.0 - CORE FOUNDATION
+ * ➲ SCIO_SYSTEM_OS v1.0 - CORE FOUNDATION
  * ➲ ARCHITECTURE: Node.js // Express // MongoDB
  * ➲ FUNCTION: Secure Auth, Mission Control, Data Archiving
  */
@@ -18,8 +18,8 @@ app.use(express.json());
 app.use(cors());
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/EduX_db";
-const SECRET_KEY = process.env.JWT_SECRET || "EduX_SUPER_SECRET_KEY_2026";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/scio_db";
+const SECRET_KEY = process.env.JWT_SECRET || "SCIO_SUPER_SECRET_KEY_2026";
 
 // --- ➲ 1. DATABASE MODELS ---
 
